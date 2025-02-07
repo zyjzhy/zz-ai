@@ -12,9 +12,9 @@ body {
   
   .app-container {
     display: flex;
-    width: 90%;
+    width: 90vw;
     max-width: 800px; /* 限制最大宽度 */
-    height: 90%;
+    height: 90vh;
     background: #ffffff;
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
     border-radius: 16px;
