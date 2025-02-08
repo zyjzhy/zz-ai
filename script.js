@@ -2,7 +2,7 @@
 const { jsPDF } = window.jspdf;
 const API_URL = "https://api.siliconflow.cn/v1/chat/completions";
 const API_KEY = process.env.API_KEY;
-
+ 
 // DOM 元素引用
 const dom = {
     chatBox: document.getElementById("chat-box"),
