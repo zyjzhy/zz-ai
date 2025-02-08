@@ -1,7 +1,23 @@
 // 初始化环境
 const { jsPDF } = window.jspdf;
 const API_URL = "https://api.siliconflow.cn/v1/chat/completions";
- 
+
+// 模型名称映射
+const modelNameMap = {
+    "deepseek-ai/DeepSeek-R1-Distill-Qwen-7B": "免费 Qwen-7B",
+    "deepseek-ai/DeepSeek-R1-Distill-Qwen-32B": "付费 Qwen-32B",
+    "deepseek-ai/DeepSeek-R1-Distill-Llama-8B": "免费 Llama-8B",
+    "deepseek-ai/DeepSeek-R1-Distill-Llama-70B": "付费 Llama-70B",
+    "deepseek-ai/DeepSeek-V3": "付费 DeepSeek-V3",
+    "THUDM/glm-4-9b-chat": "免费 glm-4",
+    "01-ai/Yi-1.5-6B-Chat": "免费 Yi-1.5-6B",
+    "01-ai/Yi-1.5-9B-Chat-16K": "免费 Yi-1.5-9B",
+    "google/gemma-2-9b-it": "免费 gemma-2-9b"
+};
+
+// 模型列表
+const modelList = Object.keys(modelNameMap);
+
 // DOM 元素引用
 const dom = {
     chatBox: document.getElementById("chat-box"),
@@ -26,8 +42,11 @@ let state = {
     currentConversation: [],
     currentConversationIndex: null,
     abortController: null,
-    pendingSave: false  // 新增状态追踪字段
+    pendingSave: false, // 新增状态追踪字段
+    currentModel: modelList[0], // 自动设置为模型列表中的第一个模型
+    lastUserMessageTimestamp: null // 记录最后一次用户提问的时间戳
 };
+
 
 // 初始化事件监听
 dom.exportButtons.json.addEventListener('click', () => exportConversation('json'));
@@ -74,22 +93,38 @@ function renameConversation(index) {
 function deleteConversation(index) {
     if (confirm(i18next.t('delete_confirm'))) {
         const isCurrent = index === state.currentConversationIndex;
-        const isFirst = index === 0;
-        
+
+        // 删除指定对话记录
         state.conversations.splice(index, 1);
         localStorage.setItem("conversations", JSON.stringify(state.conversations));
-        
+
+        // 如果删除的是当前对话记录
         if (isCurrent) {
             if (state.conversations.length > 0) {
-                loadConversation(isFirst ? 0 : Math.min(index, state.conversations.length - 1));
+                // 跳转到最新保存的对话记录（按时间排序后的第一个）
+                loadConversation(0);
             } else {
+                // 如果所有对话记录都被删除，清空聊天框
                 dom.chatBox.innerHTML = "";
                 state.currentConversation = [];
                 state.currentConversationIndex = null;
                 updateChatTitle(i18next.t("app_title"));
             }
         }
+
+        // 刷新对话历史记录
         loadHistory();
+
+        // 如果没有对话记录，自动创建一个新的对话记录
+        if (state.conversations.length === 0) {
+            createNewConversation();
+        } else if (isCurrent) {
+            // 高亮显示最新跳转的对话记录卡片
+            const historyItems = document.querySelectorAll('.history-item');
+            if (historyItems.length > 0) {
+                historyItems[0].classList.add('active');
+            }
+        }
     }
 }
 
@@ -172,6 +207,7 @@ dom.languageSelect.addEventListener("change", (e) => {
 function initApp() {
     state.conversations.sort((a, b) => b.timestamp - a.timestamp);
     loadHistory();
+    initModelSelector(); // 初始化模型选择器
     
     if (state.conversations.length > 0) {
         loadConversation(0);
@@ -185,9 +221,9 @@ function loadHistory() {
     state.conversations.forEach((conv, index) => {
         const li = document.createElement("li");
         li.className = "history-item";
-        
-        const displayTitle = conv.title.length > 16 ? 
-            conv.title.substring(0, 14) + '...' : 
+
+        const displayTitle = conv.title.length > 16 ?
+            conv.title.substring(0, 14) + '...' :
             conv.title;
 
         li.innerHTML = `
@@ -207,7 +243,7 @@ function loadHistory() {
             e.stopPropagation();
             renameConversation(index);
         });
-        
+
         li.querySelector(".delete-button").addEventListener("click", (e) => {
             e.stopPropagation();
             deleteConversation(index);
@@ -216,32 +252,47 @@ function loadHistory() {
         li.addEventListener("click", () => loadConversation(index));
         dom.historyList.appendChild(li);
     });
+
+    // 高亮显示当前对话记录的卡片
+    if (state.currentConversationIndex !== null) {
+        const historyItems = document.querySelectorAll('.history-item');
+        if (historyItems[state.currentConversationIndex]) {
+            historyItems[state.currentConversationIndex].classList.add('active');
+        }
+    }
 }
+
 
 async function createNewConversation() {
     if (state.pendingSave) {
         saveCurrentConversation(false);
     }
-    
-    return new Promise((resolve) => {
 
+    return new Promise((resolve) => {
         state.currentConversation = [];
         state.currentConversationIndex = null;
         dom.chatBox.innerHTML = "";
-        
+
         // 直接创建新对话对象
         const newConversation = {
             title: i18next.t("new_conversation"),
             messages: [],
-            timestamp: Date.now()
+            timestamp: Date.now(),
+            model: modelList[0] // 默认选择第一个模型
         };
-        
+
         state.conversations = [newConversation, ...state.conversations];
         state.currentConversationIndex = 0;
-        
+        state.currentModel = modelList[0]; // 更新当前模型为默认模型
         localStorage.setItem("conversations", JSON.stringify(state.conversations));
         loadHistory();
         updateChatTitle(newConversation.title);
+
+        // 设置模型选择器的值
+        const modelSelect = document.getElementById("model-select");
+        if (modelSelect) {
+            modelSelect.value = state.currentModel;
+        }
 
         // 确保新创建的对话记录背景颜色设置为active模式
         const historyItems = document.querySelectorAll('.history-item');
@@ -253,19 +304,18 @@ async function createNewConversation() {
     });
 }
 
-
 // 保存对话记录
 function saveCurrentConversation(forceSave = false) {
     if (!forceSave && state.pendingSave) return;
 
     state.pendingSave = true;
-    
+
     // 确保索引有效性
     if (state.currentConversationIndex === null) return;
 
     const conversation = state.conversations[state.currentConversationIndex];
     const currentTitle = conversation.title;
-    
+
     // 自动标题生成逻辑优化
     if (currentTitle === i18next.t("new_conversation")) {
         const firstQuestion = state.currentConversation.find(m => m.role === "user")?.content || '';
@@ -275,14 +325,16 @@ function saveCurrentConversation(forceSave = false) {
     // 强制同步更新
     conversation.messages = [...state.currentConversation];
     conversation.timestamp = Date.now();
-    
+    conversation.model = state.currentModel; // 保存当前模型
+
     localStorage.setItem("conversations", JSON.stringify(state.conversations));
-    
+
     // 同步更新所有UI元素
     updateChatTitle(conversation.title);
     refreshHistoryItem(state.currentConversationIndex);
     state.pendingSave = false;
 }
+
 
 // 新增：刷新指定历史记录项
 function refreshHistoryItem(index) {
@@ -303,7 +355,7 @@ function loadConversation(index) {
         state.isProcessing = false;
         setUIState(true);
     }
-    
+
     const conversation = state.conversations[index];
     if (!conversation) return;
 
@@ -312,15 +364,23 @@ function loadConversation(index) {
     historyItems.forEach(item => item.classList.remove('active'));
 
     // 为当前选中的历史记录添加高亮样式
-    historyItems[index].classList.add('active');
+    if (historyItems[index]) {
+        historyItems[index].classList.add('active');
+    }
 
     state.currentConversationIndex = index;
     state.currentConversation = [...conversation.messages];
     dom.chatBox.innerHTML = "";
     state.currentConversation.forEach(msg => addMessageElement(msg));
     updateChatTitle(conversation.title);
-}
 
+    // 恢复当前对话的模型选择
+    const modelSelect = document.getElementById("model-select");
+    if (modelSelect) {
+        modelSelect.value = conversation.model || modelList[0];
+    }
+    state.currentModel = conversation.model || modelList[0];
+}
 
 // 更新聊天框标题
 function updateChatTitle(title) {
@@ -333,7 +393,6 @@ function updateChatTitle(title) {
 function addMessageElement(message) {
     const messageDiv = document.createElement("div");
     messageDiv.className = `chat-message ${message.role} message-enter-animation`;
-    // 添加唯一标识
     messageDiv.dataset.timestamp = message.timestamp;
 
     const timestamp = new Date(message.timestamp).toLocaleString(
@@ -341,14 +400,16 @@ function addMessageElement(message) {
         i18next.t('timestamp_format')
     );
 
+    const aiName = modelNameMap[message.model] || modelNameMap[state.currentModel] || "助手";
+
     messageDiv.innerHTML = `
         <div class="avatar">${message.role === 'user' ? '👤' : '🤖'}</div>
         <div class="message-container">
             <div class="message-header">
-                <span class="message-role">${message.role === 'user' ? i18next.t('you') : i18next.t('ai')}</span>
+                <span class="message-role">${message.role === 'user' ? i18next.t('you') : aiName}</span>
                 <span class="message-time">${timestamp}</span>
             </div>
-            <div class="message-content">${message.content}</div>
+            <div class="message-content">${message.content.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')}</div>
             ${message.role === 'user' ? `
                 <div class="message-buttons">
                     <button class="copy-button" data-tooltip="复制">📄</button>
@@ -364,7 +425,6 @@ function addMessageElement(message) {
         </div>
     `;
 
-    // 添加按钮事件监听器
     setupCopyButton(messageDiv, message.content);
     if (message.role === 'user') {
         setupCopyToInputButton(messageDiv, message.content);
@@ -449,6 +509,43 @@ function setupReconnectButton(messageDiv, aiMessage) {
     }
 }
 
+// 初始化模型选择器
+function initModelSelector() {
+    const modelSelect = document.getElementById("model-select");
+    const modelSelectContainer = document.querySelector(".model-select-container");
+
+    // 初始化模型选择器
+    modelSelect.innerHTML = Object.entries(modelNameMap).map(([key, value]) => `
+        <option value="${key}" data-tooltip="${modelSelect.querySelector(`option[value="${key}"]`)?.getAttribute("data-tooltip") || ''}">${value}</option>
+    `).join('');
+    modelSelect.value = state.currentModel;
+
+    // 监听模型选择变化
+    modelSelect.addEventListener("change", (e) => {
+        state.currentModel = e.target.value;
+        updateAIModelName();
+
+        // 保存当前模型到对话
+        if (state.currentConversationIndex !== null) {
+            state.conversations[state.currentConversationIndex].model = state.currentModel;
+            localStorage.setItem("conversations", JSON.stringify(state.conversations));
+        }
+    });
+
+    // 监听鼠标悬停事件，更新提示内容
+    modelSelect.addEventListener("mouseover", () => {
+        const selectedOption = modelSelect.options[modelSelect.selectedIndex];
+        modelSelectContainer.setAttribute("data-tooltip", selectedOption.getAttribute("data-tooltip"));
+    });
+}
+
+
+// 更新 AI 名称
+function updateAIModelName() {
+    const aiName = modelNameMap[state.currentModel] || "助手";
+    i18next.t('ai', aiName);
+    updateUI();
+}
 const API_KEY = "sk-yptzbigpwpaiknvixhrhqcwodgzekskfcernrcirnmdregmv";
 // 消息发送处理
 async function sendMessage() {
@@ -476,12 +573,17 @@ async function sendMessage() {
     state.isProcessing = true;
     setUIState(false);
 
+    // 记录当前用户提问的时间戳
+    const currentUserMessageTimestamp = Date.now();
+    state.lastUserMessageTimestamp = currentUserMessageTimestamp;
+
     try {
         // 添加用户消息
         const userMessageData = {
             role: "user",
             content: userMessage,
-            timestamp: Date.now()
+            timestamp: currentUserMessageTimestamp,
+            model: state.currentModel // 保存当前模型
         };
         state.currentConversation.push(userMessageData);
         addMessageElement(userMessageData);
@@ -507,7 +609,7 @@ async function sendMessage() {
                 "Content-Type": "application/json"
             },
             body: JSON.stringify({
-                model: "deepseek-ai/DeepSeek-V3",
+                model: state.currentModel, // 使用当前选择的模型
                 messages: state.currentConversation.map(({ role, content }) => ({ role, content })),
                 stream: false,
                 max_tokens: 4096,
@@ -527,14 +629,18 @@ async function sendMessage() {
         const data = await response.json();
         const aiMessage = data.choices[0]?.message?.content || "抱歉，我无法理解您的问题。";
         
-        const aiMessageData = {
-            role: "assistant",
-            content: aiMessage,
-            timestamp: Date.now()
-        };
-        removeTypingIndicator();
-        addMessageElement(aiMessageData);
-        state.currentConversation.push(aiMessageData);
+        // 检查时间戳是否匹配
+        if (state.lastUserMessageTimestamp === currentUserMessageTimestamp) {
+            const aiMessageData = {
+                role: "assistant",
+                content: aiMessage,
+                timestamp: Date.now(),
+                model: state.currentModel // 保存当前模型
+            };
+            removeTypingIndicator();
+            addMessageElement(aiMessageData);
+            state.currentConversation.push(aiMessageData);
+        }
     } catch (error) {
         if (error.name !== 'AbortError') {
             console.error("API Error:", error);
@@ -542,7 +648,8 @@ async function sendMessage() {
             const errorMessageData = {
                 role: "assistant",
                 content: "请求处理失败，请稍后再试。",
-                timestamp: Date.now()
+                timestamp: Date.now(),
+                model: state.currentModel // 保存当前模型
             };
             addMessageElement(errorMessageData);
         }
