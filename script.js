@@ -1,7 +1,6 @@
 // 初始化环境
 const { jsPDF } = window.jspdf;
 const API_URL = "https://api.siliconflow.cn/v1/chat/completions";
-const API_KEY = process.env.API_KEY;
  
 // DOM 元素引用
 const dom = {
@@ -450,7 +449,7 @@ function setupReconnectButton(messageDiv, aiMessage) {
     }
 }
 
-
+const API_KEY = "sk-yptzbigpwpaiknvixhrhqcwodgzekskfcernrcirnmdregmv";
 // 消息发送处理
 async function sendMessage() {
     if (state.isProcessing) {
