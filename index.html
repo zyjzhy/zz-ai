@@ -3,97 +3,2412 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title data-i18n="app_title">大前门AI</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/styles/default.min.css">
-    <link rel="stylesheet" href="style.css">
-    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
-    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <title>四叶草AI</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts for better Chinese typography -->
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <!-- Markdown-it for rendering markdown -->
+    <script src="https://cdn.jsdelivr.net/npm/markdown-it@14.1.0/dist/markdown-it.min.js"></script>
+    <!-- Highlight.js for syntax highlighting in code blocks -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <!-- Libraries for file parsing -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+    <script>pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js`;</script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
+
+    <style>
+        body {
+            font-family: 'Noto Sans SC', sans-serif;
+        }
+        
+        .sidebar-transition {
+            transition: width 0.3s ease, padding 0.3s ease, border 0.3s ease;
+            overflow: hidden;
+        }
+        
+        .message-animation {
+            animation: fadeIn 0.3s ease;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .typing-dots span {
+            animation: typing 1.4s infinite ease-in-out;
+            display: inline-block;
+            margin: 0 1px;
+        }
+        
+        .typing-dots span:nth-child(1) { animation-delay: -0.32s; }
+        .typing-dots span:nth-child(2) { animation-delay: -0.16s; }
+        
+        @keyframes typing {
+            0%, 80%, 100% { transform: scale(0.8); opacity: 0.5; }
+            40% { transform: scale(1); opacity: 1; }
+        }
+
+        .conversation-dropdown {
+            position: absolute;
+            right: 0.5rem;
+            top: 100%;
+            background: white;
+            border: 1px solid #e5e7eb;
+            border-radius: 0.375rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            z-index: 10;
+            min-width: 120px;
+            padding: 0.25rem 0;
+        }
+        
+        .conversation-dropdown button {
+            width: 100%;
+            text-align: left;
+            padding: 0.5rem 0.75rem;
+            font-size: 0.875rem;
+            color: #374151;
+            display: flex;
+            align-items: center;
+        }
+        
+        .conversation-dropdown button:hover {
+            background-color: #f3f4f6;
+        }
+        
+        /* === Dark Mode Optimization === */
+        .dark-mode { background-color: #111827; color: #f9fafb; }
+        .dark-mode .bg-white { background-color: #1f2937; } /* Input backgrounds etc */
+        .dark-mode .bg-gray-50 { background-color: #1f2937; }
+        .dark-mode .text-gray-800 { color: #f9fafb; }
+        .dark-mode .text-gray-700 { color: #e5e7eb; }
+        .dark-mode .text-gray-600 { color: #d1d5db; }
+        .dark-mode .text-gray-500 { color: #9ca3af; }
+        .dark-mode .border-gray-200, .dark-mode .border-gray-300 { border-color: #4b5563; }
+        .dark-mode .bg-gray-100 { background-color: #374151; }
+        .dark-mode .bg-blue-100 { background-color: #1e3a8a; }
+        .dark-mode .hover\:bg-gray-100:hover { background-color: #4b5563; }
+        .dark-mode .conversation-dropdown { background: #374151; border-color: #4b5563; }
+        .dark-mode .conversation-dropdown button { color: #f9fafb; }
+        .dark-mode .conversation-dropdown button:hover { background-color: #4b5563; }
+        .dark-mode .prompt-card:hover { background-color: #374151; }
+        .dark-mode input[type=range]::-webkit-slider-thumb { background: #60a5fa; }
+        .dark-mode input[type=range]::-moz-range-thumb { background: #60a5fa; }
+        
+        /* Font Size Classes */
+        html.font-small { font-size: 14px; }
+        html.font-medium { font-size: 16px; }
+        html.font-large { font-size: 18px; }
+
+        /* Scrollbar Hiding */
+        #chatMessages::-webkit-scrollbar { display: none; }
+        #chatMessages { -ms-overflow-style: none; scrollbar-width: none; }
+
+        /* File Drag Overlay */
+        #drag-overlay {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-color: rgba(99, 102, 241, 0.2); /* indigo-300/20 */
+            border: 2px dashed #4f46e5; /* indigo-600 */
+            border-radius: 0.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.2s ease-in-out;
+            z-index: 999;
+        }
+        #drag-overlay.visible { opacity: 1; }
+        
+        /* Attachment List Optimization */
+        #fileUploadListContainer {
+            overflow-x: auto;
+            padding-bottom: 8px; /* Space for scrollbar */
+        }
+        #fileList {
+            display: flex;
+            flex-wrap: nowrap; /* Ensure single line for scrolling */
+            gap: 8px;
+        }
+
+        /* Chat Area Optimization - 修复问题2：聊天区域宽度为80% */
+        #chatMessages {
+            padding: 0.75rem 0.5rem;
+            width: 80%;
+            margin: 0 auto;
+        }
+
+        /* 修复问题1：深色模式聊天区域背景 */
+        .dark-mode #chatMessages {
+            background-color: #111827;
+        }
+        .dark-mode #chatContainer {
+            background-color: #111827;
+        }
+        
+        /* 修复问题1：设置弹窗和侧边栏颜色对比 */
+        .dark-mode .bg-gray-800 {
+            background-color: #1f2937;
+        }
+        .dark-mode .bg-gray-700 {
+            background-color: #374151;
+        }
+        .dark-mode .border-gray-700 {
+            border-color: #4b5563;
+        }
+        
+        /* 修复问题1：聊天标题和输入框背景颜色 */
+        .dark-mode #chatHeader {
+            background-color: #1f2937;
+            border-bottom-color: #374151;
+        }
+        .dark-mode #inputSection {
+            background-color: #1f2937;
+            border-top-color: #374151;
+        }
+
+        /* 修复问题3：缩小聊天标题字体 */
+        #chatTitle {
+            font-size: 1.125rem; /* 从原来的text-xl(1.25rem)减小到text-lg(1.125rem) */
+        }
+
+        /* Markdown and Code Block Styles */
+        .markdown-content { 
+            overflow-wrap: break-word; 
+            word-wrap: break-word; 
+            font-size: 0.9rem;
+            line-height: 1.4;
+        }
+        .markdown-content p { margin-bottom: 0.75rem; }
+        .markdown-content h1, .markdown-content h2, .markdown-content h3 { 
+            margin-top: 1rem; 
+            margin-bottom: 0.75rem; 
+            font-weight: 600; 
+        }
+        .markdown-content ul, .markdown-content ol { margin-left: 1.25rem; margin-bottom: 0.75rem; }
+        .markdown-content li { margin-bottom: 0.2rem; }
+        .markdown-content code:not([class*="language-"]) { 
+            background-color: #e5e7eb; 
+            color: #1f2937; 
+            padding: 0.125rem 0.25rem; 
+            border-radius: 0.25rem; 
+            font-family: monospace; 
+            font-size: 0.85rem;
+        }
+        .dark-mode .markdown-content code:not([class*="language-"]) { background-color: #4b5563; color: #f9fafb; }
+        
+        .markdown-content pre {
+            position: relative;
+            margin-bottom: 0.75rem;
+            white-space: pre-wrap;
+            word-break: break-all;
+            max-height: 400px;
+            overflow: auto;
+            background-color: #1f2937;
+            border-radius: 0.5rem;
+            padding: 0.75rem;
+            font-size: 0.85rem;
+        }
+        .dark-mode .markdown-content pre { background-color: #1e293b; }
+
+        .markdown-content table { 
+            border-collapse: collapse; 
+            width: 100%; 
+            margin-bottom: 0.75rem; 
+            font-size: 0.85rem;
+        }
+        .markdown-content th, .markdown-content td { border: 1px solid #d1d5db; padding: 0.375rem; }
+        .dark-mode .markdown-content th, .dark-mode .markdown-content td { border-color: #4b5563; }
+        .markdown-content th { background-color: #f3f4f6; }
+        .dark-mode .markdown-content th { background-color: #374151; }
+        
+        .markdown-content .generated-image { 
+            max-width: 350px; 
+            max-height: 350px;
+            width: auto;
+            height: auto;
+            border-radius: 0.5rem; 
+            margin-top: 0.5rem; 
+            object-fit: contain;
+        }
+
+        .copy-code-button {
+            position: absolute;
+            top: 0.5rem;
+            right: 0.5rem;
+            background-color: #4b5563;
+            color: white;
+            border: none;
+            padding: 0.25rem 0.5rem;
+            font-size: 0.75rem;
+            border-radius: 0.25rem;
+            cursor: pointer;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+        .markdown-content pre:hover .copy-code-button {
+            opacity: 1;
+        }
+        
+        .message-bubble {
+            word-break: break-word;
+            max-width: 85%;
+        }
+        
+        .action-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 2rem;
+            height: 2rem;
+            border-radius: 0.375rem;
+            color: #6b7280;
+            transition: all 0.2s ease;
+            position: relative;
+        }
+        
+        .action-btn:hover {
+            background-color: #e5e7eb;
+            color: #374151;
+        }
+
+        .action-btn.delete-btn:hover {
+            background-color: #fee2e2; /* red-100 */
+            color: #dc2626; /* red-600 */
+        }
+        
+        .dark-mode .action-btn { color: #9ca3af; }
+        .dark-mode .action-btn:hover { background-color: #4b5563; color: #d1d5db; }
+        .dark-mode .action-btn.delete-btn:hover {
+            background-color: #450a0a; /* red-900/50 */
+            color: #f87171; /* red-400 */
+        }
+        
+        .action-btn .btn-text {
+            visibility: hidden;
+            opacity: 0;
+            position: absolute;
+            white-space: nowrap;
+            background-color: #374151;
+            color: white;
+            text-align: center;
+            border-radius: 0.25rem;
+            padding: 4px 8px;
+            z-index: 1;
+            bottom: 125%;
+            left: 50%;
+            transform: translateX(-50%);
+            transition: opacity 0.2s ease;
+            font-size: 0.75rem;
+        }
+        
+        .dark-mode .action-btn .btn-text { background-color: #111827; }
+
+        .action-btn:hover .btn-text { visibility: visible; opacity: 1; }
+        
+        .tab-button {
+            padding: 0.5rem 1rem;
+            border-bottom: 2px solid transparent;
+            transition: all 0.2s;
+        }
+        
+        .tab-button.active { border-bottom-color: #3b82f6; color: #3b82f6; }
+        .dark-mode .tab-button.active { color: #60a5fa; border-bottom-color: #60a5fa; }
+        
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        
+        /* Styles for Thinking Process */
+        .thinking-details { margin-bottom: 0.75rem; }
+        .thinking-details summary { 
+            cursor: pointer; 
+            font-weight: 500; 
+            color: #6b7280; 
+            margin-bottom: 0.5rem; 
+            user-select: none; 
+            list-style-position: inside; 
+            font-size: 0.85rem;
+        }
+        .dark-mode .thinking-details summary { color: #9ca3af; }
+        .thinking-content { 
+            background-color: rgba(243, 244, 246, 0.5); 
+            border-left: 3px solid #d1d5db; 
+            padding: 0.5rem 0.75rem; 
+            font-size: 0.8rem; 
+            color: #4b5563; 
+            border-radius: 0 0.25rem 0.25rem 0;
+            max-height: 250px;
+            overflow-y: auto;
+            line-height: 1.3;
+        }
+        .dark-mode .thinking-content {
+            background-color: rgba(55, 65, 81, 0.5);
+            border-left-color: #6b7280;
+            color: #d1d5db;
+        }
+
+        /* Thinking Animation */
+        .thinking-animation {
+            display: flex;
+            align-items: center;
+            padding: 0.5rem 0;
+            font-size: 0.85rem;
+            color: #6b7280;
+        }
+
+        .thinking-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background-color: #6b7280;
+            margin: 0 2px;
+            animation: thinkingPulse 1.5s infinite ease-in-out;
+        }
+
+        .thinking-dot:nth-child(1) { animation-delay: -0.32s; }
+        .thinking-dot:nth-child(2) { animation-delay: -0.16s; }
+        .thinking-dot:nth-child(3) { animation-delay: 0s; }
+
+        @keyframes thinkingPulse {
+            0%, 80%, 100% { 
+                transform: scale(0.8);
+                opacity: 0.5;
+            }
+            40% { 
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        /* Message Delete Confirmation Modal */
+        #messageDeleteConfirmModal {
+            z-index: 60;
+        }
+        
+        /* 修复问题4：/imagine 命令样式 */
+        .imagine-command {
+            display: inline-block;
+            background-color: #e0f2fe;
+            color: #0369a1;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: 500;
+            margin-right: 4px;
+            user-select: none;
+        }
+        .dark-mode .imagine-command {
+            background-color: #0c4a6e;
+            color: #bae6fd;
+        }
+
+        /* 新增：优化示例内容宽度 */
+        #promptSuggestions {
+            max-width: 700px; /* 限制最大宽度 */
+            width: 100%;
+        }
+        
+        /* 四叶草图标样式 */
+        .clover-icon {
+            background-image: url('https://youke1.picui.cn/s1/2025/10/03/68dfc64660214.png');
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: center;
+        }
+        
+        /* 四叶草主题背景颜色 */
+        .clover-bg {
+            background-color: #e8f8f3; /* 与四叶草主题匹配 */
+        }
+        
+        .clover-bg-light {
+            background-color: #d1fae5; /* 浅绿色 */
+        }
+        
+        .dark-mode .clover-bg {
+            background-color: #065f46; /* 深绿色 */
+        }
+        
+        .dark-mode .clover-bg-light {
+            background-color: #064e3b; /* 深绿色 */
+        }
+
+        /* 侧边栏顶部图标 - 放大 */
+        #sidebar .p-4 .clover-icon {
+            width: 36px !important;  /* 从原来的20px放大到24px */
+            height: 36px !important;
+        }
+
+        /* 侧边栏切换按钮中的图标 - 放大 */
+        #sidebarToggleContainer .clover-icon {
+            width: 36px !important;  /* 从原来的16px放大到20px */
+            height: 36px !important;
+        }
+
+        /* 欢迎区域大图标 - 放大 */
+        #welcomeSection .clover-icon {
+            width: 64px !important;  /* 从原来的32px放大到48px */
+            height: 64px !important;
+        }
+
+        /* 聊天消息中的AI图标 - 放大 */
+        .chat-message-ai .clover-icon {
+            width: 36px !important;  /* 从原来的16px放大到20px */
+            height: 36px !important;
+        }
+
+        /* 打字指示器中的图标 - 放大 */
+        #typingIndicator .clover-icon {
+            width: 20px !important;  /* 从原来的16px放大到20px */
+            height: 20px !important;
+        }
+                
+        /* 文件内容显示区域 */
+        .file-content-display {
+            background-color: #f3f4f6;
+            border-left: 4px solid #10b981;
+            padding: 0.75rem;
+            margin-bottom: 0.5rem;
+            border-radius: 0.375rem;
+            font-size: 0.85rem;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        
+        .dark-mode .file-content-display {
+            background-color: #374151;
+            border-left-color: #34d399;
+        }
+        
+        .file-content-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+        }
+        
+        .file-error {
+            border-left-color: #ef4444;
+            background-color: #fef2f2;
+        }
+        
+        .dark-mode .file-error {
+            background-color: #450a0a;
+            border-left-color: #f87171;
+        }
+
+        /* 修改用户消息框背景颜色为 rgb(100 199 115) */
+        .bg-blue-500 {
+            background-color: rgb(100 199 115) !important;
+        }
+
+        .dark-mode .bg-blue-500 {
+            background-color: rgb(80 179 95) !important;
+        }
+
+        /* 确保代码块样式正确，避免重复背景 */
+        .markdown-content pre {
+            background-color: #1f2937 !important;
+            padding: 0.75rem !important;
+            border-radius: 0.5rem !important;
+            margin-bottom: 0.75rem !important;
+            position: relative;
+        }
+
+        .dark-mode .markdown-content pre {
+            background-color: #1e293b !important;
+        }
+
+        /* 移除可能重复的pre样式 */
+        .markdown-content pre pre {
+            background-color: transparent !important;
+            padding: 0 !important;
+            margin: 0 !important;
+        }
+
+        /* 限制聊天区域整体宽度 */
+    .chat-header-container, .chat-container-wrapper, .input-section-wrapper {
+        width: 100%;
+        max-width: 800px;
+        margin: 0 auto;
+    }
+
+    </style>
 </head>
-<body>
-    <div class="app-container">
-        <div class="outer-border">
-            <div class="header">
-                <span class="app-name" data-i18n="app_title">AI 聊天助手</span>
-                <div class="header-buttons">
-                    <select id="language-select">
-                        <option value="zh">中</option>
-                        <option value="en">EN</option>
-                    </select>
-                    <button id="theme-toggle" data-theme="light">🌙</button>
-                </div>
+<body class="bg-gray-50 h-screen flex overflow-hidden dark:bg-gray-900">
+    <!-- Sidebar Toggle Button (when hidden) -->
+    <div id="sidebarToggleContainer" class="absolute top-4 left-4 z-20 hidden">
+        <div class="bg-white rounded-lg shadow-sm p-2 flex items-center space-x-2 dark:bg-gray-700">
+            <div class="w-7 h-7 clover-bg rounded-full flex items-center justify-center">
+                <div class="clover-icon w-4 h-4"></div>
             </div>
-            <div class="content-container">
-                <nav class="navigation">
-                    <button id="chat-btn" class="nav-btn active" data-i18n="chat">💬对话</button>
-                    <button id="draw-btn" class="nav-btn" data-i18n="draw">🎨绘画</button>
-                    <button id="app-btn" class="nav-btn" data-i18n="app">📱应用</button>
-                </nav>
-                <!-- 左侧边栏 -->
-                <aside class="sidebar" id="sidebar">
-                    <div class="sidebar-header">
-                        <button id="new-chat-button" class="new-chat-button" data-i18n="new_conversation">📝新对话</button>
-                        <button id="toggle-sidebar" class="toggle-sidebar" data-state="open">☰</button>
+            <button id="sidebarToggleBtn" class="text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white px-2">
+                <i class="fas fa-bars"></i>
+            </button>
+            <button id="newChatBtnTop" class="text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white px-2">
+                <i class="fas fa-plus"></i>
+            </button>
+        </div>
+    </div>
+    
+    <!-- Sidebar -->
+    <div id="sidebar" class="w-64 bg-white border-r border-gray-200 flex flex-col sidebar-transition h-full dark:bg-gray-800 dark:border-gray-700">
+        <div class="p-4 border-b border-gray-200 flex items-center justify-between flex-shrink-0 dark:border-gray-700">
+            <div class="flex items-center space-x-2">
+                <div class="w-8 h-8 clover-bg rounded-full flex items-center justify-center">
+                    <div class="clover-icon w-5 h-5"></div>
+                </div>
+                <span class="font-semibold text-gray-800 dark:text-gray-200">四叶草AI</span>
+            </div>
+            <button id="closeSidebarBtn" class="text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        
+        <div class="p-4 flex-shrink-0">
+            <button id="newChatBtn" class="w-full py-2 px-4 bg-white rounded-lg shadow-sm text-gray-700 hover:bg-gray-100 transition-colors flex items-center justify-center dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600">
+                <i class="fas fa-plus mr-2"></i>
+                开启新对话
+            </button>
+        </div>
+        
+        <div class="flex-1 overflow-y-auto">
+            <div id="historyList" class="p-2 space-y-1"></div>
+        </div>
+        
+        <div class="p-4 border-t border-gray-200 flex-shrink-0 dark:border-gray-700">
+            <button id="pageSettingsBtn" class="w-full py-2 px-4 bg-white rounded-lg shadow-sm text-gray-700 hover:bg-gray-100 transition-colors flex items-center justify-center dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600">
+                <i class="fas fa-cog mr-2"></i>
+                页面设置
+            </button>
+        </div>
+    </div>
+
+    <!-- Main Content Area -->
+    <div id="mainContentArea" class="flex-1 flex flex-col relative">
+        <!-- File Drag Overlay -->
+        <div id="drag-overlay">
+            <div class="text-center text-indigo-600 font-semibold">
+                <i class="fas fa-upload fa-2x"></i>
+                <p class="mt-2">松开即可上传文件</p>
+            </div>
+        </div>
+        
+        <!-- Chat Header -->
+        <header id="chatHeader" class="p-4 border-b border-gray-200 hidden dark:border-gray-700">
+            <h1 id="chatTitle" class="text-lg font-bold text-gray-800 text-center dark:text-gray-200">四叶草AI</h1>
+        </header>
+
+        <!-- Chat Area -->
+        <div class="flex-1 overflow-y-auto" id="chatContainer">
+            <div id="chatMessages" class="p-4 space-y-6 w-full max-w-4xl mx-auto"></div>
+        </div>
+
+        <!-- Welcome & Input Container (Initially centered) -->
+        <div id="welcomeAndInputContainer" class="flex-1 flex flex-col items-center justify-center p-4 pb-8">
+            <div class="w-full max-w-4xl flex flex-col items-center">
+                 <!-- Welcome Message -->
+                <div id="welcomeSection" class="text-center mb-8">
+                    <div class="w-16 h-16 clover-bg rounded-full flex items-center justify-center mx-auto mb-4">
+                        <div class="clover-icon w-8 h-8"></div>
                     </div>
-                    <ul id="history-list" class="history-list">
-                        <!-- 动态插入历史对话 -->
-                    </ul>
-                </aside>
-                <!-- 聊天主界面 -->
-                <main class="chat-container" id="chat-container">
-                    <header class="chat-header">
-                        <h1 class="chat-title" id="chat-title"></h1>
-                        <div class="model-select-container">
-                            <select id="model-select" class="model-select">
-                                <option value="Qwen/Qwen2.5-7B-Instruct" data-tooltip="免费 通义千文 官方轻量版">Qwen2.5-7B</option>
-                                <option value="Qwen/Qwen2.5-Coder-7B-Instruct" data-tooltip="免费 通义千文 代码版">Qwen-7B-coder</option>
-                                <option value="deepseek-ai/DeepSeek-R1-Distill-Qwen-32B" data-tooltip="付费 通义千文 升级版">Qwen-32B</option>
-                                <option value="meta-llama/Meta-Llama-3.1-8B-Instruct" data-tooltip="免费 Meta-AI 综合版">Llama-8B</option>
-                                <option value="deepseek-ai/DeepSeek-R1-Distill-Llama-70B" data-tooltip="付费 Meta-AI 升级版">Llama-70B</option>
-                                <option value="internlm/internlm2_5-7b-chat" data-tooltip="免费 书生AI">Llama-70B</option>
-                                <option value="deepseek-ai/DeepSeek-V3" data-tooltip="付费 DeepSeek-V3 满血版">DeepSeek-V3</option>
-                                <option value="deepseek-ai/DeepSeek-R1" data-tooltip="老贵了 DeepSeek-R1 满血版">DeepSeek-R1</option>
-                                <option value="THUDM/glm-4-9b-chat" data-tooltip="免费 智谱轻言 升级版">glm-4</option>
-                                <option value="01-ai/Yi-1.5-9B-Chat-16K" data-tooltip="免费 零一万物 升级版">Yi-1.5-9B</option>
-                                <option value="AIDC-AI/Marco-o1" data-tooltip="免费 阿里巴巴ai">Marco-o1</option>
-                                <option value="google/gemma-2-9b-it" data-tooltip="免费 谷歌ai">gemma-2-9b</option>
-                            </select>
-                        </div>
-                        <div class="export-buttons">
-                            <div class="export-dropdown">
-                                <button class="export-btn" data-i18n="export">📤导出</button>
-                                <div class="export-menu">
-                                    <button id="export-json-button" class="export-option">JSON</button>
-                                    <!-- <button id="export-pdf-button" class="export-option">PDF</button> -->
-                                    <button id="export-html-button" class="export-option">HTML</button>
-                                </div>
-                            </div>
-                        </div>
-                    </header>
-                    <div id="chat-box" class="chat-box">
-                        <!-- 动态插入聊天内容 -->
+                    <h2 class="text-2xl font-medium text-gray-800 dark:text-gray-200">今天有什么可以帮到你？</h2>
+                </div>
+                
+                <!-- Prompt Suggestions -->
+                <div id="promptSuggestions" class="w-full grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                    <div class="prompt-card bg-white dark:bg-gray-700 p-4 rounded-lg cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors" data-prompt-text="帮我写一封关于产品延期发布的道歉邮件">
+                        <p class="font-semibold text-gray-800 dark:text-gray-200">写一封邮件</p>
+                        <p class="text-sm text-gray-500 dark:text-gray-400">关于产品延期发布的道歉信</p>
                     </div>
-                    <div class="input-container">
+                    <div class="prompt-card bg-white dark:bg-gray-700 p-4 rounded-lg cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors" data-prompt-text="用表格形式总结一下人工智能、机器学习和深度学习的区别">
+                        <p class="font-semibold text-gray-800 dark:text-gray-200">用表格总结</p>
+                        <p class="text-sm text-gray-500 dark:text-gray-400">AI、机器学习和深度学习的区别</p>
+                    </div>
+                    <div class="prompt-card bg-white dark:bg-gray-700 p-4 rounded-lg cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors" data-prompt-text="用Python写一个快速排序算法">
+                         <p class="font-semibold text-gray-800 dark:text-gray-200">写一个算法</p>
+                         <p class="text-sm text-gray-500 dark:text-gray-400">使用 Python 实现快速排序</p>
+                    </div>
+                    <div class="prompt-card bg-white dark:bg-gray-700 p-4 rounded-lg cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors" data-prompt-type="image" data-prompt-text="一只在赛博朋克城市雨夜中漫步的猫，霓虹灯光反射在湿漉漉的街道上">
+                        <p class="font-semibold text-gray-800 dark:text-gray-200">图片生成</p>
+                        <p class="text-sm text-gray-500 dark:text-gray-400">一只在赛博朋克雨夜漫步的猫</p>
+                    </div>
+                </div>
+
+                <!-- Input section will be moved here by JS -->
+                <div id="inputSectionContainer" class="w-full"></div>
+            </div>
+        </div>
+        
+        <!-- This is the actual input box HTML, which will be moved by JS -->
+        <div id="inputSection" class="w-full">
+            <div class="max-w-4xl mx-auto w-full">
+                <!-- 修复问题2：文件内容显示区域 -->
+                <div id="fileContentDisplay" class="mb-3 hidden">
+                    <div class="file-content-display">
+                        <div class="file-content-header">
+                            <span>已上传文件内容：</span>
+                            <button id="clearFileContentBtn" class="text-xs text-red-500 hover:text-red-700">清除</button>
+                        </div>
+                        <div id="fileContentText" class="text-sm"></div>
+                    </div>
+                </div>
+                
+                <!-- Uploaded File List -->
+                <div id="fileUploadListContainer" class="mb-2 hidden">
+                    <div id="fileList"></div>
+                </div>
+
+                <!-- Input Box -->
+                <div class="relative bg-white border border-gray-300 rounded-lg shadow-sm dark:bg-gray-800 dark:border-gray-600">
+                    <div id="messageInputContainer" class="relative">
                         <textarea 
-                            id="user-input" 
-                            class="user-input"
-                            placeholder="请输入您的问题..." 
-                            rows="3"
-                            maxlength="10000" 
-                            autocomplete="off"
-                            spellcheck="true"
+                            id="messageInput" 
+                            placeholder="给 四叶草AI 发送消息，或将文件拖拽到这里"
+                            class="w-full p-4 pr-20 pb-12 border-0 rounded-lg focus:outline-none resize-none bg-transparent dark:text-gray-200 dark:placeholder-gray-400"
+                            style="min-height: 64px; box-sizing: border-box;"
                         ></textarea>
-                        <button id="send-button" class="send-button" data-i18n="send">发送</button>
+                        <!-- /imagine 命令显示区域 -->
+                        <div id="imagineCommandDisplay" class="absolute top-4 left-4 hidden">
+                            <span class="imagine-command">/imagine</span>
+                        </div>
                     </div>
-                </main>
+                     <!-- Character Count -->
+                    <div id="charCount" class="absolute bottom-3 right-20 text-xs text-gray-400">0/128000</div>
+                    
+                    <!-- Bottom Toolbar -->
+                    <div class="absolute bottom-3 left-3 right-3 flex items-center justify-between">
+                        <div class="flex items-center space-x-1">
+                            <button id="modelSelectBtn" class="px-3 py-1.5 text-sm text-gray-600 hover:bg-gray-100 rounded-md flex items-center transition-colors dark:text-gray-300 dark:hover:bg-gray-700">
+                                <i class="fas fa-brain mr-1.5"></i>
+                                <span id="currentModelName"></span>
+                            </button>
+                            
+                            <button id="attachFileBtn" class="w-8 h-8 text-gray-500 hover:bg-gray-100 rounded-md flex items-center justify-center transition-colors dark:text-gray-400 dark:hover:bg-gray-700" title="上传文件">
+                                <i class="fas fa-paperclip"></i>
+                            </button>
+                            
+                            <button id="imageGenBtn" class="w-8 h-8 text-gray-500 hover:bg-gray-100 rounded-md flex items-center justify-center transition-colors dark:text-gray-400 dark:hover:bg-gray-700" title="图片生成">
+                                <i class="fas fa-image"></i>
+                            </button>
+                        </div>
+                        
+                        <button id="sendMessageBtn" class="w-9 h-9 bg-blue-500 text-white rounded-lg flex items-center justify-center hover:bg-blue-600 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed" title="发送">
+                            <i id="sendBtnIcon" class="fas fa-arrow-up"></i>
+                        </button>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
-    <script src="https://cdn.jsdelivr.net/npm/i18next/i18next.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.4.0/jspdf.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-customfonts/1.4.0/jspdf.customfonts.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/highlight.min.js"></script>
-    <script src="script.js"></script>
-    <script src="theme.js"></script>
+
+    <!-- Modals Section -->
+    <!-- Model Settings Modal -->
+    <div id="modelSettingsModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white rounded-lg p-6 w-full max-w-2xl dark:bg-gray-800">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-xl font-semibold dark:text-gray-200">模型设置</h3>
+                <button id="closeModelSettingsModal" class="text-gray-500 hover:text-gray-700 dark:text-gray-300 dark:hover:text-white"><i class="fas fa-times"></i></button>
+            </div>
+            
+            <!-- Tab Navigation -->
+            <div class="border-b border-gray-200 dark:border-gray-600 mb-4">
+                <div class="flex -mb-px">
+                    <button class="tab-button active dark:text-gray-400" data-tab="chat">对话模型</button>
+                    <button class="tab-button dark:text-gray-400" data-tab="image">图像模型</button>
+                </div>
+            </div>
+            
+            <!-- Chat Model Tab -->
+            <div class="tab-content active" id="chat-tab">
+                <div class="space-y-6">
+                    <!-- Model Selection -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">对话模型</label>
+                        <select id="chatModelSelect" class="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"></select>
+                    </div>
+
+                    <!-- Advanced Parameters -->
+                    <div>
+                        <h4 class="text-md font-medium text-gray-800 dark:text-gray-200 mb-3 border-b pb-2 dark:border-gray-600">高级参数</h4>
+                        <div class="space-y-4">
+                            <!-- Temperature -->
+                            <div>
+                                <div class="flex justify-between items-center">
+                                    <label for="temperatureSlider" class="block text-sm font-medium text-gray-700 dark:text-gray-300">随机性 (Temperature)</label>
+                                    <span id="temperatureValue" class="text-sm font-mono text-blue-600 dark:text-blue-400">0.70</span>
+                                </div>
+                                <input id="temperatureSlider" type="range" min="0" max="1" step="0.01" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-600">
+                            </div>
+                            <!-- Max Tokens -->
+                             <div>
+                                <label for="maxTokensInput" class="block text-sm font-medium text-gray-700 dark:text-gray-300">最大输出 (Max Tokens)</label>
+                                <input type="number" id="maxTokensInput" min="1" max="4096" class="mt-1 w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                            </div>
+                            <!-- Context Rounds -->
+                            <div>
+                                <div class="flex justify-between items-center">
+                                    <label for="contextRoundsSlider" class="block text-sm font-medium text-gray-700 dark:text-gray-300">上下文轮次</label>
+                                    <span id="contextRoundsValue" class="text-sm font-mono text-blue-600 dark:text-blue-400">10</span>
+                                </div>
+                                <input id="contextRoundsSlider" type="range" min="1" max="20" step="1" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-600">
+                            </div>
+                            <!-- Max Context Length Info -->
+                            <div class="text-sm text-gray-500 dark:text-gray-400">
+                                当前模型最大上下文长度：<span id="maxContextLength" class="font-semibold"></span> Tokens
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Other Settings -->
+                    <div>
+                        <label for="streamToggle" class="flex items-center cursor-pointer">
+                            <input type="checkbox" id="streamToggle" class="form-checkbox h-5 w-5 text-blue-600 rounded focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:checked:bg-blue-600">
+                            <span class="ml-2 text-sm text-gray-700 dark:text-gray-300">流式输出</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Image Model Tab -->
+            <div class="tab-content" id="image-tab">
+                <div class="space-y-6">
+                    <!-- Model Selection -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">图像模型</label>
+                        <select id="imageModelSelect" class="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"></select>
+                    </div>
+                    
+                    <!-- Image Size Selection -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">图片尺寸</label>
+                        <select id="imageSizeSelect" class="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                            <option value="1024x1024">1024x1024 (1:1)</option>
+                            <option value="960x1280">960x1280 (3:4)</option>
+                            <option value="768x1024">768x1024 (3:4)</option>
+                            <option value="720x1440">720x1440 (1:2)</option>
+                            <option value="720x1280">720x1280 (9:16)</option>
+                        </select>
+                    </div>
+                    
+                    <!-- Advanced Parameters -->
+                    <div>
+                        <h4 class="text-md font-medium text-gray-800 dark:text-gray-200 mb-3 border-b pb-2 dark:border-gray-600">高级参数</h4>
+                        <div class="space-y-4">
+                            <!-- Guidance Scale -->
+                            <div>
+                                <div class="flex justify-between items-center">
+                                    <label for="guidanceScaleSlider" class="block text-sm font-medium text-gray-700 dark:text-gray-300">引导强度 (Guidance Scale)</label>
+                                    <span id="guidanceScaleValue" class="text-sm font-mono text-blue-600 dark:text-blue-400">7.5</span>
+                                </div>
+                                <input id="guidanceScaleSlider" type="range" min="1" max="20" step="0.1" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-600">
+                            </div>
+                            
+                            <!-- Inference Steps -->
+                            <div>
+                                <div class="flex justify-between items-center">
+                                    <label for="inferenceStepsSlider" class="block text-sm font-medium text-gray-700 dark:text-gray-300">推理步数 (Inference Steps)</label>
+                                    <span id="inferenceStepsValue" class="text-sm font-mono text-blue-600 dark:text-blue-400">20</span>
+                                </div>
+                                <input id="inferenceStepsSlider" type="range" min="1" max="50" step="1" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-600">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="flex justify-end space-x-3 mt-8">
+                <button id="saveModelSettingsBtn" class="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors">确定</button>
+            </div>
+        </div>
+    </div>
+    <!-- File Upload Modal -->
+    <div id="fileUploadModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white rounded-lg p-6 w-96 dark:bg-gray-800">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-medium dark:text-gray-200">上传文件</h3>
+                <button id="closeFileUploadModal" class="text-gray-500 hover:text-gray-700 dark:text-gray-300 dark:hover:text-white"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="mb-4">
+                <div id="fileDropArea" class="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-8 text-center cursor-pointer hover:border-blue-500 transition-colors">
+                    <i class="fas fa-cloud-upload-alt text-gray-400 text-4xl mb-4"></i>
+                    <p class="text-gray-600 dark:text-gray-300">拖放文件到此处或点击上传</p>
+                    <p class="text-gray-400 text-sm mt-2">支持 Excel, TXT, PDF, Word 文件</p>
+                    <input type="file" id="fileInput" class="hidden" multiple accept=".xlsx,.xls,.txt,.pdf,.doc,.docx">
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Page Settings Modal -->
+    <div id="pageSettingsModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white rounded-lg p-6 w-96 dark:bg-gray-800">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-medium dark:text-gray-200">页面设置</h3>
+                <button id="closePageSettingsModal" class="text-gray-500 hover:text-gray-700 dark:text-gray-300 dark:hover:text-white"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">主题设置</label>
+                <select id="themeSelect" class="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                    <option value="light">浅色模式</option>
+                    <option value="dark">深色模式</option>
+                    <option value="auto">跟随系统</option>
+                </select>
+            </div>
+            <div class="mb-6">
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">字体大小</label>
+                <select id="fontSizeSelect" class="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                    <option value="small">小</option>
+                    <option value="medium" selected>中</option>
+                    <option value="large">大</option>
+                </select>
+            </div>
+            <div class="flex justify-end space-x-3">
+                <button id="savePageSettingsBtn" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors">保存</button>
+            </div>
+        </div>
+    </div>
+    <!-- Rename Conversation Modal -->
+    <div id="renameConversationModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white rounded-lg p-6 w-96 dark:bg-gray-800">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-medium dark:text-gray-200">重命名对话</h3>
+                <button id="closeRenameModal" class="text-gray-500 hover:text-gray-700 dark:text-gray-300 dark:hover:text-white"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="mb-4">
+                <input type="text" id="renameInput" placeholder="输入新标题" class="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"/>
+            </div>
+            <div class="flex justify-end space-x-3">
+                <button id="cancelRenameBtn" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition-colors dark:bg-gray-600 dark:text-gray-200 dark:hover:bg-gray-500">取消</button>
+                <button id="saveRenameBtn" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors">保存</button>
+            </div>
+        </div>
+    </div>
+    <!-- Delete Confirmation Modal -->
+    <div id="deleteConfirmModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white rounded-lg p-6 w-96 dark:bg-gray-800">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-medium text-red-600 dark:text-red-500">永久删除对话</h3>
+                <button id="closeDeleteModal" class="text-gray-500 hover:text-gray-700 dark:text-gray-300 dark:hover:text-white"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="mb-6">
+                <p class="text-gray-700 dark:text-gray-300">删除后，该对话将不可恢复。确认删除吗？</p>
+            </div>
+            <div class="flex justify-end space-x-3">
+                <button id="cancelDeleteBtn" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition-colors dark:bg-gray-600 dark:text-gray-200 dark:hover:bg-gray-500">取消</button>
+                <button id="confirmDeleteBtn" class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors">确定</button>
+            </div>
+        </div>
+    </div>
+    <!-- Message Delete Confirmation Modal -->
+    <div id="messageDeleteConfirmModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white rounded-lg p-6 w-96 dark:bg-gray-800">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-medium text-red-600 dark:text-red-500">删除消息</h3>
+                <button id="closeMessageDeleteModal" class="text-gray-500 hover:text-gray-700 dark:text-gray-300 dark:hover:text-white"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="mb-6">
+                <p class="text-gray-700 dark:text-gray-300">确定要删除这条消息吗？此操作不可撤销。</p>
+            </div>
+            <div class="flex justify-end space-x-3">
+                <button id="cancelMessageDeleteBtn" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition-colors dark:bg-gray-600 dark:text-gray-200 dark:hover:bg-gray-500">取消</button>
+                <button id="confirmMessageDeleteBtn" class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors">确定</button>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // --- Model Configuration ---
+        const MODELS_CONFIG = {
+            chat: [
+                // Models that SUPPORT thinking mode
+                { id: 'deepseek-ai/DeepSeek-R1-Distill-Qwen-7B', name: 'DeepSeek-R1-Distill', maxContext: 128000, supportsThinking: true },
+                { id: 'THUDM/glm-4-9b-chat', name: 'GLM-4-9B-Chat', maxContext: 128000, supportsThinking: true },
+                
+                { id: 'Qwen/Qwen2-7B-Instruct', name: 'Qwen2-7B-Instruct', maxContext: 32000, supportsThinking: true },
+                { id: 'Qwen/Qwen2.5-7B-Instruct', name: 'Qwen2.5-7B-Instruct', maxContext: 32000, supportsThinking: true },
+                { id: 'Qwen/Qwen3-8B', name: 'Qwen3-8B', maxContext: 128000, supportsThinking: true },
+                
+                // Models that DO NOT support thinking mode
+                { id: 'Qwen/Qwen2.5-Coder-7B-Instruct', name: 'Qwen2.5-Coder-7B-Instruct', maxContext: 32000, supportsThinking: false },
+                { id: 'deepseek-ai/DeepSeek-R1-0528-Qwen3-8B', name: 'DeepSeek-R1-0528', maxContext: 128000, supportsThinking: false },
+                { id: 'THUDM/GLM-Z1-9B-0414', name: 'GLM-Z1-9B-0414', maxContext: 128000, supportsThinking: false },
+                { id: 'THUDM/GLM-4.1V-9B-Thinking', name: 'GLM-4.1V-9B-Thinking', maxContext: 64000, supportsThinking: false },
+                { id: 'internlm/internlm2_5-7b-chat', name: 'InternLM2.5-7B-Chat', maxContext: 32000, supportsThinking: false },
+            ],
+            image: [
+                { id: 'Kwai-Kolors/Kolors', name: 'Kwai Kolors' }
+            ]
+        }
+
+        const DEFAULT_SETTINGS = {
+            chat: {
+                modelId: 'deepseek-ai/DeepSeek-R1-Distill-Qwen-7B',
+                temperature: 0.7,
+                maxTokens: 4096, // 确保不超过4096
+                contextRounds: 10,
+                stream: true,
+            },
+            image: {
+                modelId: 'Kwai-Kolors/Kolors',
+                size: '1024x1024',
+                guidanceScale: 7.5,
+                inferenceSteps: 20,
+            }
+        };
+
+        // DOM Elements
+        const sidebar = document.getElementById('sidebar');
+        const sidebarToggleBtn = document.getElementById('sidebarToggleBtn');
+        const sidebarToggleContainer = document.getElementById('sidebarToggleContainer');
+        const closeSidebarBtn = document.getElementById('closeSidebarBtn');
+        const chatMessages = document.getElementById('chatMessages');
+        const chatHeader = document.getElementById('chatHeader');
+        const chatTitle = document.getElementById('chatTitle');
+        const messageInput = document.getElementById('messageInput');
+        const sendMessageBtn = document.getElementById('sendMessageBtn');
+        const sendBtnIcon = document.getElementById('sendBtnIcon');
+        const newChatBtn = document.getElementById('newChatBtn');
+        const newChatBtnTop = document.getElementById('newChatBtnTop');
+        const historyList = document.getElementById('historyList');
+        const welcomeAndInputContainer = document.getElementById('welcomeAndInputContainer');
+        const inputSection = document.getElementById('inputSection');
+        const inputSectionContainer = document.getElementById('inputSectionContainer');
+        const chatContainer = document.getElementById('chatContainer');
+        const mainContentArea = document.getElementById('mainContentArea');
+        const promptSuggestions = document.getElementById('promptSuggestions');
+        const charCount = document.getElementById('charCount');
+        const fileUploadListContainer = document.getElementById('fileUploadListContainer');
+        const fileList = document.getElementById('fileList');
+        const dragOverlay = document.getElementById('drag-overlay');
+        const messageInputContainer = document.getElementById('messageInputContainer');
+        const imagineCommandDisplay = document.getElementById('imagineCommandDisplay');
+        const fileContentDisplay = document.getElementById('fileContentDisplay');
+        const fileContentText = document.getElementById('fileContentText');
+        const clearFileContentBtn = document.getElementById('clearFileContentBtn');
+        
+        // Buttons
+        const modelSelectBtn = document.getElementById('modelSelectBtn');
+        const currentModelName = document.getElementById('currentModelName');
+        const imageGenBtn = document.getElementById('imageGenBtn');
+        const attachFileBtn = document.getElementById('attachFileBtn');
+        const pageSettingsBtn = document.getElementById('pageSettingsBtn');
+
+        // Modals & Forms
+        const modelSettingsModal = document.getElementById('modelSettingsModal');
+        const fileUploadModal = document.getElementById('fileUploadModal');
+        const pageSettingsModal = document.getElementById('pageSettingsModal');
+        const renameConversationModal = document.getElementById('renameConversationModal');
+        const deleteConfirmModal = document.getElementById('deleteConfirmModal');
+        const messageDeleteConfirmModal = document.getElementById('messageDeleteConfirmModal');
+        const fileDropArea = document.getElementById('fileDropArea');
+        const fileInput = document.getElementById('fileInput');
+        const chatModelSelect = document.getElementById('chatModelSelect');
+        const imageModelSelect = document.getElementById('imageModelSelect');
+        const imageSizeSelect = document.getElementById('imageSizeSelect');
+        const streamToggle = document.getElementById('streamToggle');
+        const temperatureSlider = document.getElementById('temperatureSlider');
+        const temperatureValue = document.getElementById('temperatureValue');
+        const maxTokensInput = document.getElementById('maxTokensInput');
+        const contextRoundsSlider = document.getElementById('contextRoundsSlider');
+        const contextRoundsValue = document.getElementById('contextRoundsValue');
+        const guidanceScaleSlider = document.getElementById('guidanceScaleSlider');
+        const guidanceScaleValue = document.getElementById('guidanceScaleValue');
+        const inferenceStepsSlider = document.getElementById('inferenceStepsSlider');
+        const inferenceStepsValue = document.getElementById('inferenceStepsValue');
+        const maxContextLength = document.getElementById('maxContextLength');
+
+        // State Variables
+        let conversations = [];
+        let currentConversationId = null;
+        let sidebarVisible = true;
+        let isImageGenMode = false;
+        let md; // Markdown-it instance
+        let uploadedFiles = [];
+        let failedFiles = []; // 存储解析失败的文件
+        const IMAGE_GEN_PREFIX = "/imagine ";
+
+        // State variables for stop functionality
+        let isGenerating = false;
+        let abortController = null;
+        
+        // Thinking animation HTML
+        const THINKING_ANIMATION = `
+            <div class="thinking-animation">
+                <div class="thinking-dot"></div>
+                <div class="thinking-dot"></div>
+                <div class="thinking-dot"></div>
+                <span style="margin-left: 8px;">正在思考中...</span>
+            </div>
+        `;
+        
+        // API Configuration
+        const API_KEY = "sk-yptzbigpwpaiknvixhrhqcwodgzekskfcernrcirnmdregmv";
+        const API_BASE = "https://api.siliconflow.cn/v1";
+
+        // Initialization
+        document.addEventListener('DOMContentLoaded', () => {
+            md = window.markdownit({
+                html: true,
+                linkify: true,
+                typographer: true,
+                highlight: function (str, lang) {
+                    let codeContent = '';
+                    
+                    if (lang && hljs.getLanguage(lang)) {
+                        try {
+                            codeContent = hljs.highlight(str, { language: lang, ignoreIllegals: true }).value;
+                        } catch (__) {
+                            codeContent = md.utils.escapeHtml(str);
+                        }
+                    } else {
+                        codeContent = md.utils.escapeHtml(str);
+                    }
+                    
+                    // 重要：只返回code标签内容，markdown-it会自动用pre包装
+                    return `<code class="${lang ? 'language-' + lang : ''} hljs">${codeContent}</code>`;
+                }
+            });
+
+            // 完全移除fence规则的重写，避免重复包装
+            // 不要添加以下代码：
+            // const defaultRender = md.renderer.rules.fence || function(tokens, idx, options, env, self) {
+            //     return self.renderToken(tokens, idx, options);
+            // };
+            // md.renderer.rules.fence = function(tokens, idx, options, env, self) {
+            //     const token = tokens[idx];
+            //     const rawCode = defaultRender(tokens, idx, options, env, self);
+            //     return `<pre>${rawCode}</pre>`;
+            // };
+
+            populateModelSelectors();
+            loadConversations();
+            loadSettings();
+            setupEventListeners();
+            
+            if (conversations.length === 0) {
+                createNewConversation();
+            } else {
+                const sortedConversations = [...conversations].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+                loadConversation(sortedConversations[0].id);
+            }
+            
+            if (window.innerWidth <= 768) {
+                toggleSidebar(false);
+            }
+            
+            updateUILayout();
+        });
+        
+        function populateModelSelectors() {
+            chatModelSelect.innerHTML = '';
+            imageModelSelect.innerHTML = '';
+            
+            const sortedChatModels = [...MODELS_CONFIG.chat].sort((a, b) => b.supportsThinking - a.supportsThinking || a.name.localeCompare(b.name));
+
+            sortedChatModels.forEach(model => {
+                const option = document.createElement('option');
+                option.value = model.id;
+                option.textContent = `${model.name}${model.supportsThinking ? ' (✨支持思考)' : ''}`;
+                option.dataset.maxContext = model.maxContext;
+                option.dataset.supportsThinking = model.supportsThinking;
+                chatModelSelect.appendChild(option);
+            });
+
+            MODELS_CONFIG.image.forEach(model => {
+                const option = document.createElement('option');
+                option.value = model.id;
+                option.textContent = model.name;
+                imageModelSelect.appendChild(option);
+            });
+        }
+
+        function setupEventListeners() {
+            sidebarToggleBtn.addEventListener('click', () => toggleSidebar());
+            closeSidebarBtn.addEventListener('click', () => toggleSidebar(false));
+
+            // Unified event listener for send/stop button
+            sendMessageBtn.addEventListener('click', handleSendStopClick);
+            
+            messageInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    handleSendStopClick();
+                }
+                
+                // 修复问题1：改进 /imagine 命令的删除逻辑
+                if (isImageGenMode && e.key === 'Backspace') {
+                    const currentValue = messageInput.value;
+                    const cursorPosition = messageInput.selectionStart;
+                    
+                    // 只有当光标在 /imagine 命令之后，并且内容只剩下命令本身时，才退出图片生成模式
+                    if (currentValue === IMAGE_GEN_PREFIX || 
+                        (cursorPosition <= IMAGE_GEN_PREFIX.length && currentValue.startsWith(IMAGE_GEN_PREFIX))) {
+                        e.preventDefault();
+                        toggleImageGenMode(false);
+                        return;
+                    }
+                    
+                    // 如果用户正在删除 /imagine 命令之后的内容，允许正常删除
+                    // 不阻止默认行为，让浏览器正常处理退格键
+                }
+            });
+            
+            messageInput.addEventListener('input', () => {
+                updateCharCount();
+                // 修复问题1：检测是否输入了 /imagine 命令
+                checkImageGenMode();
+            });
+
+            newChatBtn.addEventListener('click', createNewConversation);
+            newChatBtnTop.addEventListener('click', createNewConversation);
+            
+            chatMessages.addEventListener('click', handleChatAreaClick);
+
+            modelSelectBtn.addEventListener('click', () => openModal(modelSettingsModal));
+            document.getElementById('closeModelSettingsModal').addEventListener('click', () => closeModal(modelSettingsModal));
+            document.getElementById('saveModelSettingsBtn').addEventListener('click', saveCurrentConversationSettings);
+            
+            // Update max tokens when model changes
+            chatModelSelect.addEventListener('change', updateModelMaxContextDisplay);
+
+            temperatureSlider.addEventListener('input', () => temperatureValue.textContent = parseFloat(temperatureSlider.value).toFixed(2));
+            contextRoundsSlider.addEventListener('input', () => contextRoundsValue.textContent = contextRoundsSlider.value);
+            guidanceScaleSlider.addEventListener('input', () => guidanceScaleValue.textContent = parseFloat(guidanceScaleSlider.value).toFixed(1));
+            inferenceStepsSlider.addEventListener('input', () => inferenceStepsValue.textContent = inferenceStepsSlider.value);
+
+            document.querySelectorAll('.tab-button').forEach(button => {
+                button.addEventListener('click', () => {
+                    const tabId = button.dataset.tab;
+                    document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
+                    button.classList.add('active');
+                    document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+                    document.getElementById(`${tabId}-tab`).classList.add('active');
+                });
+            });
+
+            pageSettingsBtn.addEventListener('click', () => openModal(pageSettingsModal));
+            document.getElementById('closePageSettingsModal').addEventListener('click', () => closeModal(pageSettingsModal));
+            document.getElementById('savePageSettingsBtn').addEventListener('click', savePageSettings);
+
+            attachFileBtn.addEventListener('click', () => openModal(fileUploadModal));
+            fileDropArea.addEventListener('click', () => fileInput.click());
+            fileInput.addEventListener('change', (e) => handleFiles(e.target.files));
+            document.getElementById('closeFileUploadModal').addEventListener('click', () => closeModal(fileUploadModal));
+            
+            mainContentArea.addEventListener('dragover', (e) => { e.preventDefault(); dragOverlay.classList.add('visible'); });
+            mainContentArea.addEventListener('dragleave', () => { dragOverlay.classList.remove('visible'); });
+            mainContentArea.addEventListener('drop', (e) => {
+                e.preventDefault();
+                dragOverlay.classList.remove('visible');
+                if (e.dataTransfer.files.length > 0) handleFiles(e.dataTransfer.files);
+            });
+            
+            setupConversationManagementListeners();
+
+            window.addEventListener('resize', () => {
+                if (window.innerWidth <= 768 && sidebarVisible) toggleSidebar(false);
+                else if (window.innerWidth > 768 && !sidebarVisible) toggleSidebar(true);
+            });
+            
+            promptSuggestions.addEventListener('click', (e) => {
+                const card = e.target.closest('.prompt-card');
+                if (!card) return;
+                
+                if (card.dataset.promptType === 'image') {
+                    toggleImageGenMode(true, card.dataset.promptText);
+                } else {
+                    toggleImageGenMode(false);
+                    messageInput.value = card.dataset.promptText;
+                }
+                messageInput.focus();
+                updateCharCount();
+            });
+
+            imageGenBtn.addEventListener('click', () => toggleImageGenMode());
+            
+            // 新增：消息删除确认模态框事件监听
+            document.getElementById('closeMessageDeleteModal').addEventListener('click', () => closeModal(messageDeleteConfirmModal));
+            document.getElementById('cancelMessageDeleteBtn').addEventListener('click', () => closeModal(messageDeleteConfirmModal));
+            document.getElementById('confirmMessageDeleteBtn').addEventListener('click', confirmMessageDelete);
+            
+            // 新增：清除文件内容按钮事件监听
+            clearFileContentBtn.addEventListener('click', clearFileContent);
+        }
+
+        // --- UI & Layout ---
+        function toggleSidebar(forceState) {
+            sidebarVisible = typeof forceState === 'boolean' ? forceState : !sidebarVisible;
+            if (sidebarVisible) {
+                sidebar.classList.remove('w-0', 'p-0', 'border-0');
+                sidebar.classList.add('w-64');
+                sidebarToggleContainer.classList.add('hidden');
+                sidebar.querySelectorAll('.p-4, .p-2').forEach(el => el.style.display = '');
+            } else {
+                sidebar.classList.add('w-0', 'p-0', 'border-0');
+                sidebar.classList.remove('w-64');
+                sidebarToggleContainer.classList.remove('hidden');
+                sidebar.querySelectorAll('.p-4, .p-2').forEach(el => el.style.display = 'none');
+            }
+        }
+
+        function updateUILayout() {
+            const conversation = getCurrentConversation();
+            const hasMessages = conversation && conversation.messages.length > 0;
+            
+            if (hasMessages) {
+                welcomeAndInputContainer.style.display = 'none';
+                chatContainer.style.display = 'block';
+                mainContentArea.appendChild(inputSection); 
+                inputSection.classList.add('p-4', 'border-t', 'border-gray-200', 'dark:border-gray-700');
+                chatHeader.classList.remove('hidden');
+            } else {
+                welcomeAndInputContainer.style.display = 'flex';
+                chatContainer.style.display = 'none';
+                inputSectionContainer.appendChild(inputSection);
+                inputSection.classList.remove('p-4', 'border-t', 'border-gray-200', 'dark:border-gray-700');
+                chatHeader.classList.add('hidden');
+            }
+            scrollToBottom();
+        }
+        
+        function scrollToBottom() {
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+
+        function updateCharCount() {
+            const conversation = getCurrentConversation();
+            if (!conversation) return;
+
+            const settings = conversation.settings.chat;
+            const selectedModelConfig = MODELS_CONFIG.chat.find(m => m.id === settings.modelId);
+            const currentMax = isImageGenMode ? 1000 : (selectedModelConfig?.maxContext || 128000);
+            
+            const len = messageInput.value.length;
+            charCount.textContent = `${len}/${currentMax.toLocaleString()}`;
+            charCount.classList.toggle('text-red-500', len > currentMax);
+            
+            messageInput.style.height = 'auto';
+            const newHeight = Math.min(messageInput.scrollHeight, 300);
+            messageInput.style.height = newHeight + 'px';
+        }
+
+        // --- Core Messaging & API Calls ---
+        
+        // Unified click handler for send/stop
+        function handleSendStopClick() {
+            if (isGenerating) {
+                if (abortController) {
+                    abortController.abort();
+                    console.log("Request aborted by user.");
+                }
+            } else {
+                sendMessage();
+            }
+        }
+
+        async function sendMessage() {
+            const message = messageInput.value.trim();
+            if (!message || isGenerating) return;
+
+            const conversation = getCurrentConversation();
+            if (!conversation) return;
+
+            // 修复问题2：检查是否有解析失败的文件
+            if (failedFiles.length > 0) {
+                alert(`有 ${failedFiles.length} 个文件解析失败，请先删除这些文件再提问。`);
+                return;
+            }
+
+            // 修复问题3：检查文件内容+用户提问是否超出最大长度
+            const settings = conversation.settings.chat;
+            const selectedModelConfig = MODELS_CONFIG.chat.find(m => m.id === settings.modelId);
+            const maxContext = selectedModelConfig?.maxContext || 128000;
+            
+            // 计算用户消息长度
+            const userMessageLength = message.length;
+            
+            // 计算文件内容长度（如果有）
+            let fileContentLength = 0;
+            if (conversation.fileContext) {
+                fileContentLength = conversation.fileContext.length;
+            }
+            
+            // 总长度检查
+            const totalLength = userMessageLength + fileContentLength;
+            if (totalLength > maxContext) {
+                alert(`消息内容过长（${totalLength}字符），超过了模型的最大上下文长度（${maxContext}字符）。请缩短问题或减少文件内容。`);
+                return;
+            }
+
+            const userMessageId = 'user-' + Date.now();
+            
+            // 修复问题3：只显示用户提问的内容，不显示文件相关内容
+            addMessageToChat('user', message, false, userMessageId);
+            
+            // 保存用户消息（不包含文件内容）
+            conversation.messages.push({ role: 'user', content: message, id: userMessageId });
+            
+            // Save conversation immediately after user sends message
+            saveConversations();
+            
+            messageInput.value = '';
+            updateCharCount();
+            updateUILayout();
+
+            if (isImageGenMode) {
+                const prompt = message.substring(IMAGE_GEN_PREFIX.length).trim();
+                if(prompt) generateImage(prompt);
+                toggleImageGenMode(false);
+            } else {
+                await callChatAPI();
+            }
+            
+            // 修复问题2：用户第一次提问发送成功后清除文件列表和文件内容显示
+            clearFileList();
+            clearFileContent();
+        }
+        
+        function setGeneratingState(generating) {
+            isGenerating = generating;
+            sendMessageBtn.disabled = generating;
+            messageInput.disabled = generating;
+            
+            if (generating) {
+                sendBtnIcon.className = 'fas fa-stop';
+                sendMessageBtn.title = "停止";
+                sendMessageBtn.disabled = false; // Re-enable for stopping
+            } else {
+                sendBtnIcon.className = 'fas fa-arrow-up';
+                sendMessageBtn.title = "发送";
+                messageInput.disabled = false;
+                abortController = null;
+                messageInput.focus();
+            }
+        }
+
+        async function callChatAPI() {
+            const conversation = getCurrentConversation();
+            if (!conversation) return;
+            
+            setGeneratingState(true);
+            showTypingIndicator();
+            abortController = new AbortController();
+
+            try {
+                const settings = conversation.settings.chat;
+                
+                // 修复问题3：构建包含文件上下文的消息
+                let messagesForContext = [];
+                
+                // 如果有文件上下文，将其作为系统消息添加到消息开头
+                if (conversation.fileContext) {
+                    messagesForContext.push({
+                        role: 'system',
+                        content: `以下是用户上传的文件内容，请根据这些文件内容回答用户的问题：\n\n${conversation.fileContext}`
+                    });
+                }
+                
+                // 添加对话历史
+                const historyMessages = conversation.messages.map(msg => ({ role: msg.role, content: msg.content }));
+                messagesForContext = messagesForContext.concat(historyMessages);
+                
+                const rounds = settings.contextRounds;
+                const userMessages = messagesForContext.filter(m => m.role === 'user');
+                if (userMessages.length > rounds) {
+                    const firstContextMessageIndex = messagesForContext.indexOf(userMessages[userMessages.length - rounds]);
+                    messagesForContext = messagesForContext.slice(firstContextMessageIndex);
+                }
+                
+                const requestData = {
+                    model: settings.modelId,
+                    messages: messagesForContext,
+                    stream: settings.stream,
+                    max_tokens: Math.min(parseInt(settings.maxTokens), 4096), // 确保不超过4096
+                    temperature: settings.temperature,
+                    top_p: 0.7
+                };
+                
+                // Conditionally add thinking parameters
+                const modelConfig = MODELS_CONFIG.chat.find(m => m.id === settings.modelId);
+                if (modelConfig && modelConfig.supportsThinking) {
+                    requestData.enable_thinking = true;
+                }
+
+                const response = await fetch(`${API_BASE}/chat/completions`, {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${API_KEY}`, 'Content-Type': 'application/json' },
+                    body: JSON.stringify(requestData),
+                    signal: abortController.signal
+                });
+                
+                hideTypingIndicator();
+
+                if (!response.ok) {
+                    let errorMessage = `API 请求失败, 状态码: ${response.status}`;
+                    try {
+                        const errorData = await response.json();
+                        errorMessage += ` - ${errorData.error?.message || JSON.stringify(errorData)}`;
+                    } catch (e) {
+                        errorMessage += ` - ${response.statusText}`;
+                    }
+                    if (response.status === 403) errorMessage += " (请检查API Key或账户余额)";
+                    throw new Error(errorMessage);
+                }
+
+                if (settings.stream) {
+                    await handleStreamResponse(response);
+                } else {
+                    const data = await response.json();
+                    const assistantMessage = data.choices[0].message.content;
+                    const assistantMessageId = 'assistant-' + Date.now();
+                    addMessageToChat('assistant', assistantMessage, true, assistantMessageId);
+                    conversation.messages.push({ role: 'assistant', content: assistantMessage, id: assistantMessageId });
+                    
+                    if (conversation.messages.length <= 2) { 
+                       updateConversationTitle(conversation, conversation.messages.find(m => m.role === 'user').content);
+                    }
+                    // Save conversation after non-stream reply
+                    saveConversations();
+                }
+            } catch (error) {
+                hideTypingIndicator();
+                if (error.name === 'AbortError') {
+                    console.log('Stream aborted by user.');
+                    // The partially generated message is handled and saved by handleStreamResponse
+                } else {
+                    console.error('发送消息出错:', error);
+                    const errorId = 'error-' + Date.now();
+                    addMessageToChat('assistant', `抱歉，请求时出现错误: ${error.message}`, false, errorId);
+                    // Save conversation even if there is an error
+                    conversation.messages.push({ role: 'assistant', content: `抱歉，请求时出现错误: ${error.message}`, id: errorId });
+                    saveConversations();
+                }
+            } finally {
+                setGeneratingState(false);
+            }
+        }
+
+        // Completely overhauled stream handler for thinking process and aborting
+        async function handleStreamResponse(response) {
+            const reader = response.body.getReader();
+            const decoder = new TextDecoder();
+            let assistantMessage = '';
+            let thinkingMessage = '';
+            let buffer = '';
+            const assistantMessageId = 'assistant-' + Date.now();
+            
+            const messageElement = addMessageToChat('assistant', '', true, assistantMessageId);
+            const contentElement = messageElement.querySelector('.final-content');
+            const thinkingDetailsElement = messageElement.querySelector('.thinking-details');
+            const thinkingContentElement = messageElement.querySelector('.thinking-content');
+            
+            let isThinkingBlock = false;
+            const THINK_START_TAG = '<|thought|>';
+            const THINK_END_TAG = '<|/thought|>';
+            
+            // 显示思考动画
+            thinkingDetailsElement.style.display = 'block';
+            thinkingContentElement.innerHTML = THINKING_ANIMATION;
+
+            try {
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+                    
+                    buffer += decoder.decode(value, { stream: true });
+                    
+                    let eventEndIndex;
+                    while ((eventEndIndex = buffer.indexOf('\n\n')) !== -1) {
+                        const eventData = buffer.substring(0, eventEndIndex);
+                        buffer = buffer.substring(eventEndIndex + 2);
+
+                        for (const line of eventData.split('\n')) {
+                            if (line.startsWith('data: ')) {
+                                if (line.includes('[DONE]')) continue;
+                                try {
+                                    const data = JSON.parse(line.substring(6));
+                                    if (data.choices && data.choices[0].delta && data.choices[0].delta.content !== null) {
+                                        let chunk = data.choices[0].delta.content || "";
+
+                                        // Handle thinking block
+                                        if (!isThinkingBlock && chunk.includes(THINK_START_TAG)) {
+                                            isThinkingBlock = true;
+                                            thinkingDetailsElement.style.display = 'block';
+                                            const parts = chunk.split(THINK_START_TAG);
+                                            assistantMessage += parts[0];
+                                            chunk = parts[1] || '';
+                                        }
+                                        if (isThinkingBlock && chunk.includes(THINK_END_TAG)) {
+                                            isThinkingBlock = false;
+                                            const parts = chunk.split(THINK_END_TAG);
+                                            thinkingMessage += parts[0];
+                                            chunk = parts[1] || '';
+                                        }
+
+                                        if (isThinkingBlock) {
+                                            thinkingMessage += chunk;
+                                            // 只有当有实际内容时才更新思考内容
+                                            if (thinkingMessage.trim()) {
+                                                thinkingContentElement.innerHTML = md.render(thinkingMessage + '▌');
+                                            }
+                                        } else {
+                                            assistantMessage += chunk;
+                                            contentElement.innerHTML = md.render(assistantMessage + '▌');
+                                        }
+                                        scrollToBottom();
+                                    }
+                                } catch (e) {
+                                    console.warn('Stream parsing error:', e, 'Line:', line);
+                                }
+                            }
+                        }
+                    }
+                }
+            } catch (error) {
+                if (error.name === 'AbortError') {
+                    console.log('Stream reading aborted.');
+                    contentElement.innerHTML = md.render(assistantMessage + "\n\n*(用户已中断)*");
+                } else {
+                    console.error('处理流式响应出错:', error);
+                    contentElement.innerHTML = `<p class="text-red-500">抱歉，处理响应时出现了错误: ${error.message}</p>`;
+                }
+            } finally {
+                // Final render without the cursor
+                contentElement.innerHTML = md.render(assistantMessage);
+                if (thinkingMessage.trim()) {
+                    thinkingContentElement.innerHTML = md.render(thinkingMessage);
+                } else {
+                    // 如果没有思考内容，隐藏思考区块
+                    thinkingDetailsElement.style.display = 'none';
+                }
+                
+                messageElement.dataset.rawContent = assistantMessage;
+                addCopyButtonsToCodeBlocks(messageElement);
+
+                if (thinkingDetailsElement && thinkingMessage.trim()) {
+                    thinkingDetailsElement.open = false; // Collapse after generation
+                } else {
+                    thinkingDetailsElement.style.display = 'none'; // Hide if no thinking content
+                }
+
+                const conversation = getCurrentConversation();
+                if (!conversation) return;
+                
+                // Add the (potentially partial) message to history and save
+                conversation.messages.push({ role: 'assistant', content: assistantMessage, id: assistantMessageId });
+                
+                if (conversation.messages.length <= 2) {
+                    updateConversationTitle(conversation, conversation.messages.find(m => m.role === 'user').content);
+                }
+                saveConversations();
+            }
+        }
+
+        async function generateImage(prompt) {
+            const conversation = getCurrentConversation();
+            if (!conversation) return;
+
+            setGeneratingState(true);
+            showTypingIndicator();
+            abortController = new AbortController();
+
+            try {
+                const settings = conversation.settings.image;
+                const requestData = {
+                    model: settings.modelId,
+                    prompt: prompt,
+                    n: 1, 
+                    num_inference_steps: settings.inferenceSteps,
+                    guidance_scale: settings.guidanceScale,
+                    size: settings.size
+                };
+                
+                const response = await fetch(`${API_BASE}/images/generations`, {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${API_KEY}`, 'Content-Type': 'application/json' },
+                    body: JSON.stringify(requestData),
+                    signal: abortController.signal
+                });
+
+                hideTypingIndicator();
+                
+                if (!response.ok) {
+                    let errorMessage = `图片生成失败, 状态码: ${response.status}`;
+                     try {
+                        const errorData = await response.json();
+                        errorMessage += ` - ${errorData.error?.message || JSON.stringify(errorData)}`;
+                    } catch (e) {
+                        errorMessage += ` - ${response.statusText}`;
+                    }
+                    if (response.status === 403) errorMessage += " (请检查API Key和账户状态)";
+                    throw new Error(errorMessage);
+                }
+                
+                const data = await response.json();
+                
+                if (data.data && data.data[0] && data.data[0].url) {
+                    const imageUrl = data.data[0].url;
+                    const assistantMessageContent = `<p>根据您的描述"${md.utils.escapeHtml(prompt)}"，我生成了以下图片：</p><img src="${imageUrl}" alt="${md.utils.escapeHtml(prompt)}" class="generated-image">`;
+                    const assistantMessageId = 'assistant-' + Date.now();
+
+                    addMessageToChat('assistant', assistantMessageContent, true, assistantMessageId);
+                    
+                    conversation.messages.push({ role: 'assistant', content: assistantMessageContent, id: assistantMessageId, isHtml: true });
+                    if (conversation.messages.length <= 2) {
+                        updateConversationTitle(conversation, `图片：${prompt}`);
+                    }
+                    saveConversations();
+                } else { throw new Error('API响应中未找到图片URL'); }
+            } catch (error) {
+                hideTypingIndicator();
+                if (error.name === 'AbortError') {
+                    console.log('Image generation aborted by user.');
+                } else {
+                    console.error('生成图片出错:', error);
+                    const errorId = 'error-' + Date.now();
+                    addMessageToChat('assistant', `抱歉，生成图片时出现了错误: ${error.message}`, false, errorId);
+                    conversation.messages.push({ role: 'assistant', content: `抱歉，生成图片时出现了错误: ${error.message}`, id: errorId });
+                    saveConversations();
+                }
+            } finally {
+                setGeneratingState(false);
+            }
+        }
+
+        // 修复问题1和问题3：改进的图片生成模式切换函数
+        function toggleImageGenMode(forceState, initialPrompt = '') {
+            const currentValue = messageInput.value; // 获取原始输入值，用于检查前缀
+            const wasImageGenMode = isImageGenMode;
+            
+            // 确定新的状态
+            isImageGenMode = typeof forceState === 'boolean' ? forceState : !isImageGenMode;
+            
+            if (isImageGenMode) {
+                // 进入图片生成模式
+                imageGenBtn.classList.add('bg-blue-100', 'text-blue-600', 'dark:bg-blue-900', 'dark:text-blue-300');
+                messageInput.placeholder = "输入图片描述，然后按发送..."; // 设置图片模式的placeholder
+                
+                // 显示 /imagine 命令提示（UI元素）
+                imagineCommandDisplay.classList.remove('hidden');
+                
+                // 修复问题1：增大paddingLeft的值，确保输入框内容和placeholder不会与/imagine命令重叠
+                // 5.5rem 可能会不够，我们将其设置为 7rem，为 '/imagine' 及其内边距留出更多空间
+                messageInput.style.paddingLeft = '7rem'; 
+                
+                let newInputValue = currentValue;
+                if (currentValue.startsWith(IMAGE_GEN_PREFIX)) {
+                    // 如果输入框内容已经包含 /imagine 前缀，则从实际输入框中移除它
+                    // 这样输入框内部只保留实际的图片描述
+                    newInputValue = currentValue.substring(IMAGE_GEN_PREFIX.length);
+                } else if (!wasImageGenMode && initialPrompt) {
+                    // 如果刚切换到图片模式，并且有初始提示，则使用它
+                    newInputValue = initialPrompt;
+                }
+                // 否则，如果当前值没有前缀且没有初始提示，保持当前值不变
+                messageInput.value = newInputValue;
+                
+                // 将光标定位到文本末尾
+                setTimeout(() => {
+                    messageInput.setSelectionRange(messageInput.value.length, messageInput.value.length);
+                }, 0);
+            } else {
+                // 退出图片生成模式
+                imageGenBtn.classList.remove('bg-blue-100', 'text-blue-600', 'dark:bg-blue-900', 'dark:text-blue-300');
+                messageInput.placeholder = "给 AI智能助手 发送消息，或将文件拖拽到这里"; // 恢复默认placeholder
+                
+                // 隐藏 /imagine 命令提示
+                imagineCommandDisplay.classList.add('hidden');
+                // 恢复默认的paddingLeft
+                messageInput.style.paddingLeft = '1rem'; 
+                
+                // 当退出模式时，由于进入时已经将 /imagine 前缀从输入框内容中移除，
+                // 所以此处无需再进行移除操作。输入框内容已经是纯粹的用户输入。
+                // 保持此处的逻辑不变，虽然在大多数情况下它不会再修改 `messageInput.value`。
+                if (currentValue.startsWith(IMAGE_GEN_PREFIX)) {
+                    messageInput.value = currentValue.substring(IMAGE_GEN_PREFIX.length);
+                }
+            }
+            updateCharCount();
+            messageInput.focus();
+        }
+        
+        // 修复问题1：检测是否输入了 /imagine 命令
+        function checkImageGenMode() {
+            const currentValue = messageInput.value;
+            
+            // 只有当输入框以 /imagine 开头且后面有空格时才进入图片生成模式
+            if (currentValue.startsWith(IMAGE_GEN_PREFIX) && currentValue.length >= IMAGE_GEN_PREFIX.length) {
+                if (!isImageGenMode) {
+                    toggleImageGenMode(true);
+                }
+            } else if (isImageGenMode && !currentValue.startsWith(IMAGE_GEN_PREFIX)) {
+                // 如果已经不在图片生成模式，但状态还是图片生成模式，则退出
+                toggleImageGenMode(false);
+            }
+        }
+        
+        function addMessageToChat(role, content, isMarkdownOrHtml = false, messageId) {
+            const messageContainer = document.createElement('div');
+            messageContainer.className = 'message-animation group relative';
+            messageContainer.dataset.messageId = messageId;
+            messageContainer.dataset.rawContent = content; 
+            messageContainer.dataset.role = role;
+
+            let messageContentHtml = '';
+            if (isMarkdownOrHtml) {
+                const isHtmlBlock = /<[a-z][\s\S]*>/i.test(content);
+                messageContentHtml = isHtmlBlock ? content : md.render(content);
+            } else {
+                 messageContentHtml = md.render(content);
+            }
+
+            if (role === 'user') {
+                messageContainer.innerHTML = `
+                    <div class="flex items-start justify-end">
+                        <div class="bg-blue-500 text-white rounded-lg p-3 message-bubble markdown-content">${messageContentHtml}</div>
+                        <div class="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center ml-3 flex-shrink-0">
+                            <i class="fas fa-user text-white"></i>
+                        </div>
+                    </div>
+                    <div class="flex items-center justify-end mt-2 pr-11 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <button data-action="copy" class="action-btn">
+                            <i class="fas fa-copy"></i>
+                            <span class="btn-text">复制</span>
+                        </button>
+                        <!-- Added delete button for user message -->
+                        <button data-action="delete" class="action-btn delete-btn">
+                            <i class="fas fa-trash-alt"></i>
+                            <span class="btn-text">删除</span>
+                        </button>
+                    </div>`;
+            } else { // assistant
+                messageContainer.innerHTML = `
+                    <div class="flex items-start">
+                        <div class="w-8 h-8 clover-bg rounded-full flex items-center justify-center mr-3 flex-shrink-0">
+                            <div class="clover-icon w-8 h-8"></div>
+                        </div>
+                        <div class="bg-gray-100 dark:bg-gray-700 rounded-lg p-3 w-full message-bubble">
+                            <!-- Thinking Process Block -->
+                            <details class="thinking-details" style="display: none;">
+                                <summary class="text-sm">🤔 思考中...</summary>
+                                <div class="thinking-content markdown-content"></div>
+                            </details>
+                            <div class="markdown-content final-content">${messageContentHtml}</div>
+                        </div>
+                    </div>
+                    <div class="flex items-center justify-start mt-2 pl-11 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <button data-action="regenerate" class="action-btn">
+                            <i class="fas fa-sync-alt"></i>
+                            <span class="btn-text">重新生成</span>
+                        </button>
+                        <button data-action="copy" class="action-btn">
+                            <i class="fas fa-copy"></i>
+                            <span class="btn-text">复制</span>
+                        </button>
+                        <!-- Added delete button for assistant message -->
+                        <button data-action="delete" class="action-btn delete-btn">
+                            <i class="fas fa-trash-alt"></i>
+                            <span class="btn-text">删除</span>
+                        </button>
+                    </div>`;
+            }
+            
+            chatMessages.appendChild(messageContainer);
+            
+            if (isMarkdownOrHtml) {
+                addCopyButtonsToCodeBlocks(messageContainer);
+            }
+
+            scrollToBottom();
+            return messageContainer;
+        }
+
+        function showTypingIndicator() {
+            hideTypingIndicator();
+            const typingIndicator = document.createElement('div');
+            typingIndicator.id = 'typingIndicator';
+            typingIndicator.className = 'flex items-start message-animation';
+            typingIndicator.innerHTML = `<div class="w-8 h-8 clover-bg rounded-full flex items-center justify-center mr-3 flex-shrink-0"><div class="clover-icon w-4 h-4"></div></div><div class="bg-gray-100 dark:bg-gray-700 rounded-lg p-3 max-w-xs"><div class="typing-dots"><span class="w-2 h-2 bg-gray-500 rounded-full"></span><span class="w-2 h-2 bg-gray-500 rounded-full"></span><span class="w-2 h-2 bg-gray-500 rounded-full"></span></div></div>`;
+            chatMessages.appendChild(typingIndicator);
+            scrollToBottom();
+        }
+
+        function hideTypingIndicator() {
+            document.getElementById('typingIndicator')?.remove();
+        }
+        
+        function handleChatAreaClick(e) {
+            const button = e.target.closest('button');
+            if (!button) return;
+
+            const action = button.dataset.action;
+            const messageContainer = button.closest('.group[data-message-id]');
+            
+            if (button.classList.contains('copy-code-button')) {
+                const preElement = button.closest('pre');
+                if(preElement) {
+                    const codeBlock = preElement.querySelector('code');
+                    copyToClipboard(codeBlock.innerText, button);
+                }
+                return;
+            }
+
+            if (!action || !messageContainer) return;
+            const messageId = messageContainer.dataset.messageId;
+
+            if (action === 'copy') {
+                const rawContent = messageContainer.dataset.rawContent;
+                copyToClipboard(rawContent, button);
+            } else if (action === 'regenerate') {
+                handleRegeneration(messageContainer, messageId);
+            } else if (action === 'delete') {
+                // Handle message deletion with confirmation
+                messageDeleteConfirmModal.dataset.messageId = messageId;
+                openModal(messageDeleteConfirmModal);
+            }
+        }
+        
+        // Function to handle message deletion with confirmation
+        function confirmMessageDelete() {
+            const messageId = messageDeleteConfirmModal.dataset.messageId;
+            const conversation = getCurrentConversation();
+            if (!conversation) return;
+
+            const messageIndex = conversation.messages.findIndex(m => m.id === messageId);
+            if (messageIndex > -1) {
+                conversation.messages.splice(messageIndex, 1);
+                saveConversations();
+                
+                const messageElement = chatMessages.querySelector(`[data-message-id="${messageId}"]`);
+                if (messageElement) {
+                    messageElement.remove();
+                }
+                // If no messages left, reset to welcome screen
+                if (conversation.messages.length === 0) {
+                    updateUILayout();
+                }
+            }
+            closeModal(messageDeleteConfirmModal);
+        }
+
+        function handleRegeneration(messageContainer, messageId) {
+            const conversation = getCurrentConversation();
+            if (!conversation) return;
+
+            const messageIndex = conversation.messages.findIndex(m => m.id === messageId);
+            if (messageIndex === -1) return;
+
+            // Remove the assistant's message and all subsequent messages from the DOM
+            const messagesToRemove = Array.from(chatMessages.querySelectorAll('.group'));
+            const startIndex = messagesToRemove.findIndex(el => el.dataset.messageId === messageId);
+            if(startIndex > -1) {
+                messagesToRemove.slice(startIndex).forEach(el => el.remove());
+            }
+
+            // Remove messages from the data model (from the assistant message onwards)
+            conversation.messages.splice(messageIndex);
+            
+            saveConversations();
+            
+            callChatAPI();
+        }
+        
+        function addCopyButtonsToCodeBlocks(container) {
+            container.querySelectorAll('pre').forEach(pre => {
+                if (pre.querySelector('.copy-code-button')) return;
+                const copyButton = document.createElement('button');
+                copyButton.innerHTML = '<i class="fas fa-copy"></i>';
+                copyButton.className = 'copy-code-button';
+                copyButton.title = '复制';
+                pre.appendChild(copyButton);
+            });
+        }
+        
+        function copyToClipboard(text, buttonElement) {
+            navigator.clipboard.writeText(text).then(() => {
+                const originalContent = buttonElement.innerHTML;
+                const btnTextEl = buttonElement.querySelector('.btn-text');
+                const originalTitle = btnTextEl ? btnTextEl.textContent : '复制';
+
+                if (btnTextEl) {
+                    buttonElement.querySelector('i').className = 'fas fa-check';
+                    btnTextEl.textContent = '已复制';
+                } else {
+                    buttonElement.innerHTML = '<i class="fas fa-check"></i>';
+                }
+
+                setTimeout(() => {
+                    buttonElement.innerHTML = originalContent;
+                    if(btnTextEl) btnTextEl.textContent = originalTitle;
+                }, 2000);
+            }).catch(err => {
+                console.error('无法复制文本: ', err);
+            });
+        }
+
+        // --- File Handling ---
+        function handleFiles(files) {
+            for (let i = 0; i < files.length; i++) {
+                const file = files[i];
+                if (!['xlsx', 'xls', 'txt', 'pdf', 'doc', 'docx'].includes(file.name.split('.').pop().toLowerCase())) {
+                    alert(`不支持的文件类型: ${file.name}`);
+                    continue;
+                }
+                uploadedFiles.push(file);
+                addFileToList(file);
+            }
+            fileInput.value = '';
+            closeModal(fileUploadModal);
+            processFiles();
+        }
+        
+        function addFileToList(file) {
+            const fileItem = document.createElement('div');
+            fileItem.className = 'bg-gray-100 dark:bg-gray-700 rounded-full py-1 pl-2 pr-1 flex items-center text-sm relative flex-shrink-0';
+            const fileId = `file-${Date.now()}-${Math.random()}`;
+            fileItem.dataset.fileId = fileId;
+            file.id = fileId;
+            fileItem.innerHTML = `<i class="fas fa-spinner fa-spin text-gray-500 dark:text-gray-300 text-xs"></i><span class="ml-1.5 mr-2 truncate max-w-[150px]" title="${file.name}">${file.name}</span><button class="w-4 h-4 bg-gray-300 text-white rounded-full flex items-center justify-center text-xs hover:bg-red-500 transition-colors" onclick="removeFile('${fileId}')">&times;</button>`;
+            fileList.appendChild(fileItem);
+            fileUploadListContainer.classList.remove('hidden');
+        }
+        
+        function removeFile(fileId) {
+            uploadedFiles = uploadedFiles.filter(f => f.id !== fileId);
+            failedFiles = failedFiles.filter(f => f.id !== fileId);
+            document.querySelector(`[data-file-id="${fileId}"]`)?.remove();
+            if (uploadedFiles.length === 0) fileUploadListContainer.classList.add('hidden');
+            
+            // 如果所有文件都被移除，也清除文件内容显示
+            if (uploadedFiles.length === 0 && failedFiles.length === 0) {
+                clearFileContent();
+            }
+        }
+        
+        // 修复问题2：清除文件列表
+        function clearFileList() {
+            uploadedFiles = [];
+            failedFiles = [];
+            fileList.innerHTML = '';
+            fileUploadListContainer.classList.add('hidden');
+        }
+        
+        // 修复问题2：清除文件内容显示
+        function clearFileContent() {
+            fileContentDisplay.classList.add('hidden');
+            fileContentText.innerHTML = '';
+            const conversation = getCurrentConversation();
+            if (conversation) {
+                conversation.fileContext = null;
+                saveConversations();
+            }
+        }
+        
+        async function processFiles() {
+            if (uploadedFiles.length === 0) return;
+            showTypingIndicator();
+            try {
+                let fileContents = [];
+                failedFiles = []; // 重置失败文件列表
+                
+                for (const file of uploadedFiles) {
+                    try {
+                        const content = await readFileContent(file);
+                        fileContents.push({ name: file.name, content: content });
+                        const fileItem = document.querySelector(`[data-file-id="${file.id}"] i`);
+                        if(fileItem) fileItem.className = 'fas fa-check-circle text-green-600 dark:text-green-400 text-xs';
+                    } catch (error) {
+                        console.error(`处理文件 ${file.name} 出错:`, error);
+                        failedFiles.push(file);
+                        const fileItem = document.querySelector(`[data-file-id="${file.id}"] i`);
+                        if(fileItem) {
+                            fileItem.className = 'fas fa-times-circle text-red-600 dark:text-red-400 text-xs';
+                            fileItem.parentElement.classList.add('file-error');
+                        }
+                    }
+                }
+                
+                // 显示文件内容
+                if (fileContents.length > 0) {
+                    const combinedFileContent = fileContents.map(f => `文件名: ${f.name}\n内容:\n${f.content}`).join('\n\n---\n\n');
+                    
+                    fileContentText.textContent = combinedFileContent.substring(0, 1000) + (combinedFileContent.length > 1000 ? '...' : '');
+                    fileContentDisplay.classList.remove('hidden');
+                    
+                    const conversation = getCurrentConversation();
+                    if (conversation) {
+                        // 将文件内容存储到对话上下文中
+                        conversation.fileContext = combinedFileContent;
+                        saveConversations();
+                    }
+                }
+                
+                // 如果有解析失败的文件，显示提示
+                if (failedFiles.length > 0) {
+                    const failedFileNames = failedFiles.map(f => f.name).join(', ');
+                    alert(`以下文件解析失败，请删除这些文件后再提问：${failedFileNames}`);
+                }
+                
+                hideTypingIndicator();
+            } catch (error) {
+                console.error('处理文件出错:', error);
+                hideTypingIndicator();
+                addMessageToChat('assistant', `抱歉，处理文件时出现了错误: ${error.message}`, false, 'error-' + Date.now());
+            }
+        }
+        
+        function readFileContent(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                const fileExt = file.name.split('.').pop().toLowerCase();
+                reader.onload = async function(e) {
+                    try {
+                        let content = '';
+                        const arrayBuffer = e.target.result;
+                        if (fileExt === 'txt') { content = new TextDecoder().decode(arrayBuffer); }
+                        else if (fileExt === 'pdf') {
+                            const pdf = await pdfjsLib.getDocument({data: arrayBuffer}).promise;
+                            let text = '';
+                            for (let i = 1; i <= pdf.numPages; i++) {
+                                const page = await pdf.getPage(i);
+                                const textContent = await page.getTextContent();
+                                text += textContent.items.map(item => item.str).join(' ');
+                            }
+                            content = text;
+                        } else if (['xlsx', 'xls'].includes(fileExt)) {
+                            const workbook = XLSX.read(arrayBuffer, {type: 'array'});
+                            workbook.SheetNames.forEach(sheetName => { content += `工作表: ${sheetName}\n${XLSX.utils.sheet_to_csv(workbook.Sheets[sheetName])}\n\n`; });
+                        } else if (['doc', 'docx'].includes(fileExt)) {
+                            content = (await mammoth.extractRawText({arrayBuffer: arrayBuffer})).value;
+                        }
+                        resolve(content);
+                    } catch (error) { reject(error); }
+                };
+                reader.onerror = () => reject(new Error('读取文件失败'));
+                reader.readAsArrayBuffer(file);
+            });
+        }
+
+        // --- Conversation Management & Settings ---
+        function createNewConversation() {
+            // 修复问题2：如果当前有对话正在进行，则停止它并截断输出
+            if (isGenerating && abortController) {
+                abortController.abort();
+                setGeneratingState(false);
+                
+                // 截断当前对话的输出内容，只保留已生成的部分
+                const conversation = getCurrentConversation();
+                if (conversation && conversation.messages.length > 0) {
+                    const lastMessage = conversation.messages[conversation.messages.length - 1];
+                    if (lastMessage.role === 'assistant') {
+                        // 获取当前显示的最后一个消息内容
+                        const lastMessageElement = chatMessages.querySelector(`[data-message-id="${lastMessage.id}"]`);
+                        if (lastMessageElement) {
+                            const currentContent = lastMessageElement.dataset.rawContent;
+                            lastMessage.content = currentContent;
+                        }
+                    }
+                }
+            }
+            
+            toggleImageGenMode(false);
+            clearFileContent(); // 清除文件内容
+            clearFileList(); // 清除文件列表
+            
+            const newConv = { 
+                id: Date.now().toString(), 
+                title: '新对话', 
+                messages: [], 
+                createdAt: new Date().toISOString(),
+                settings: JSON.parse(JSON.stringify(DEFAULT_SETTINGS)),
+                fileContext: null // 修复问题3：添加文件上下文字段
+            };
+            conversations.push(newConv);
+            saveConversations();
+            loadConversation(newConv.id);
+            if (window.innerWidth <= 768) toggleSidebar(false);
+        }
+        
+        function loadConversation(id) {
+            // 修复问题2：如果当前有对话正在进行，则停止它
+            if (isGenerating && abortController) {
+                abortController.abort();
+                setGeneratingState(false);
+            }
+            
+            const conversation = conversations.find(c => c.id === id);
+            if (!conversation) return;
+
+            if (!conversation.settings) {
+                conversation.settings = JSON.parse(JSON.stringify(DEFAULT_SETTINGS));
+            }
+            
+            // 修复问题3：确保文件上下文字段存在
+            if (!conversation.fileContext) {
+                conversation.fileContext = null;
+            }
+
+            currentConversationId = id;
+            chatMessages.innerHTML = '';
+            
+            // 只显示用户和AI的真实对话消息，不显示文件准备消息
+            conversation.messages.forEach(msg => {
+                // 过滤掉文件准备就绪的消息
+                if (!msg.content.includes('文件已准备就绪')) {
+                    addMessageToChat(msg.role, msg.content, msg.isHtml || msg.role === 'assistant', msg.id);
+                }
+            });
+            
+            chatTitle.textContent = conversation.title;
+            
+            loadSettingsIntoUI(conversation.settings);
+            updateUILayout();
+            updateConversationList();
+            
+            // 如果有文件上下文，显示文件内容
+            if (conversation.fileContext) {
+                fileContentText.textContent = conversation.fileContext.substring(0, 1000) + (conversation.fileContext.length > 1000 ? '...' : '');
+                fileContentDisplay.classList.remove('hidden');
+            } else {
+                fileContentDisplay.classList.add('hidden');
+            }
+        }
+
+        function loadSettingsIntoUI(settings) {
+            chatModelSelect.value = settings.chat.modelId;
+            temperatureSlider.value = settings.chat.temperature;
+            temperatureValue.textContent = parseFloat(settings.chat.temperature).toFixed(2);
+            contextRoundsSlider.value = settings.chat.contextRounds;
+            contextRoundsValue.textContent = settings.chat.contextRounds;
+            streamToggle.checked = settings.chat.stream;
+
+            // Set max tokens and update UI correctly when loading a conversation
+            maxTokensInput.max = 4096; // 强制最大值为4096
+            maxTokensInput.value = Math.min(settings.chat.maxTokens, 4096); // 确保不超过4096
+
+            imageModelSelect.value = settings.image.modelId;
+            imageSizeSelect.value = settings.image.size;
+            guidanceScaleSlider.value = settings.image.guidanceScale;
+            guidanceScaleValue.textContent = parseFloat(settings.image.guidanceScale).toFixed(1);
+            inferenceStepsSlider.value = settings.image.inferenceSteps;
+            inferenceStepsValue.textContent = settings.image.inferenceSteps;
+
+            updateModelDisplay(settings.chat.modelId);
+            updateModelMaxContextDisplay();
+        }
+        
+        function saveCurrentConversationSettings() {
+            const conversation = getCurrentConversation();
+            if (!conversation) return;
+
+            conversation.settings.chat.modelId = chatModelSelect.value;
+            conversation.settings.chat.temperature = parseFloat(temperatureSlider.value);
+            conversation.settings.chat.maxTokens = Math.min(parseInt(maxTokensInput.value) || 4096, 4096); // 确保不超过4096
+            conversation.settings.chat.contextRounds = parseInt(contextRoundsSlider.value);
+            conversation.settings.chat.stream = streamToggle.checked;
+            
+            conversation.settings.image.modelId = imageModelSelect.value;
+            conversation.settings.image.size = imageSizeSelect.value;
+            conversation.settings.image.guidanceScale = parseFloat(guidanceScaleSlider.value);
+            conversation.settings.image.inferenceSteps = parseInt(inferenceStepsSlider.value);
+
+            saveConversations();
+            updateModelDisplay(conversation.settings.chat.modelId);
+            closeModal(modelSettingsModal);
+        }
+        
+        function updateConversationTitle(conversation, userMessage) {
+            if (!userMessage) return;
+            conversation.title = userMessage.substring(0, 30) + (userMessage.length > 30 ? '...' : '');
+            updateConversationList();
+            chatTitle.textContent = conversation.title;
+        }
+
+        function updateConversationList() {
+            historyList.innerHTML = '';
+            if (conversations.length === 0) return;
+            const sortedConversations = [...conversations].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+            sortedConversations.forEach(conv => {
+                const isActive = conv.id === currentConversationId;
+                const item = document.createElement('div');
+                item.className = `relative p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer transition-colors ${isActive ? 'bg-blue-50 dark:bg-blue-900/50' : ''}`;
+                item.dataset.id = conv.id;
+                item.innerHTML = `<div class="flex items-center justify-between"><div class="text-sm text-gray-700 dark:text-gray-200 truncate flex-1 pr-8">${conv.title}</div><button class="absolute right-1 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-800 dark:hover:text-white p-2 rounded-full w-8 h-8 flex items-center justify-center" data-menuid="${conv.id}"><i class="fas fa-ellipsis-h text-xs"></i></button></div>`;
+                historyList.appendChild(item);
+            });
+        }
+        
+        function setupConversationManagementListeners() {
+            historyList.addEventListener('click', (e) => {
+                const convItem = e.target.closest('[data-id]');
+                const menuButton = e.target.closest('[data-menuid]');
+                if (menuButton) { e.stopPropagation(); toggleConversationMenu(menuButton.dataset.menuid, menuButton); }
+                else if (convItem) { loadConversation(convItem.dataset.id); }
+            });
+            document.getElementById('saveRenameBtn').addEventListener('click', () => {
+                const newTitle = document.getElementById('renameInput').value.trim();
+                const idToRename = renameConversationModal.dataset.id;
+                if (!newTitle || !idToRename) return;
+                const conversation = conversations.find(c => c.id === idToRename);
+                if (conversation) {
+                    conversation.title = newTitle;
+                    if (currentConversationId === idToRename) chatTitle.textContent = newTitle;
+                    updateConversationList(); saveConversations();
+                }
+                closeModal(renameConversationModal);
+            });
+            document.getElementById('closeRenameModal').addEventListener('click', () => closeModal(renameConversationModal));
+            document.getElementById('cancelRenameBtn').addEventListener('click', () => closeModal(renameConversationModal));
+            document.getElementById('confirmDeleteBtn').addEventListener('click', () => {
+                const idToDelete = deleteConfirmModal.dataset.id;
+                if (!idToDelete) return;
+                conversations = conversations.filter(c => c.id !== idToDelete);
+                if (currentConversationId === idToDelete) {
+                    if (conversations.length > 0) {
+                        const sorted = [...conversations].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+                        loadConversation(sorted[0].id);
+                    } else { createNewConversation(); }
+                } else {
+                    updateConversationList();
+                }
+                saveConversations(); 
+                closeModal(deleteConfirmModal);
+            });
+            document.getElementById('closeDeleteModal').addEventListener('click', () => closeModal(deleteConfirmModal));
+            document.getElementById('cancelDeleteBtn').addEventListener('click', () => closeModal(deleteConfirmModal));
+            document.addEventListener('click', (e) => { if (!e.target.closest('.conversation-dropdown') && !e.target.closest('[data-menuid]')) { document.querySelectorAll('.conversation-dropdown').forEach(d => d.remove()); } });
+        }
+        
+        function toggleConversationMenu(id, button) {
+            document.querySelectorAll('.conversation-dropdown').forEach(d => d.remove());
+            const dropdown = document.createElement('div');
+            dropdown.className = 'conversation-dropdown';
+            dropdown.innerHTML = `<button data-action="rename" data-id="${id}"><i class="fas fa-pen w-6 text-center mr-1"></i>重命名</button><button data-action="delete" data-id="${id}" class="text-red-500 hover:bg-red-50 dark:hover:bg-red-900/50"><i class="fas fa-trash w-6 text-center mr-1"></i>删除</button>`;
+            button.parentElement.parentElement.appendChild(dropdown);
+            dropdown.addEventListener('click', e => {
+                const actionBtn = e.target.closest('button');
+                if (!actionBtn) return;
+                const conversationId = actionBtn.dataset.id;
+                if (actionBtn.dataset.action === 'rename') {
+                    renameConversationModal.dataset.id = conversationId;
+                    const conversation = conversations.find(c => c.id === conversationId);
+                    document.getElementById('renameInput').value = conversation ? conversation.title : '';
+                    openModal(renameConversationModal);
+                } else if (actionBtn.dataset.action === 'delete') {
+                    deleteConfirmModal.dataset.id = conversationId;
+                    openModal(deleteConfirmModal);
+                }
+                dropdown.remove();
+            });
+        }
+        
+        function openModal(modal) { modal.classList.remove('hidden'); }
+        function closeModal(modal) { modal.classList.add('hidden'); }
+        
+        function updateModelDisplay(modelId) {
+            const model = MODELS_CONFIG.chat.find(m => m.id === modelId);
+            if (model) {
+                currentModelName.textContent = model.name;
+            }
+            updateCharCount();
+        }
+
+        // Function to update max tokens based on model selection
+        function updateModelMaxContextDisplay() {
+            const selectedOption = chatModelSelect.options[chatModelSelect.selectedIndex];
+            if (selectedOption && selectedOption.dataset.maxContext) {
+                const maxCtx = parseInt(selectedOption.dataset.maxContext);
+                maxContextLength.textContent = maxCtx.toLocaleString();
+                maxTokensInput.max = 4096; // 强制最大值为4096
+                // 设置默认值为4096，确保不超过API限制
+                maxTokensInput.value = 4096;
+                updateCharCount();
+            }
+        }
+
+        function savePageSettings() {
+            const theme = document.getElementById('themeSelect').value;
+            const fontSize = document.getElementById('fontSizeSelect').value;
+            localStorage.setItem('ai_chat_settings', JSON.stringify({ theme, fontSize }));
+            applySettings(theme, fontSize);
+            closeModal(pageSettingsModal);
+        }
+        
+        function loadSettings() {
+            const settings = JSON.parse(localStorage.getItem('ai_chat_settings')) || { theme: 'auto', fontSize: 'medium' };
+            document.getElementById('themeSelect').value = settings.theme;
+            document.getElementById('fontSizeSelect').value = settings.fontSize;
+            applySettings(settings.theme, settings.fontSize);
+        }
+        
+        function applySettings(theme, fontSize) {
+            const body = document.body;
+            body.classList.remove('dark-mode');
+            if (theme === 'dark' || (theme === 'auto' && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                body.classList.add('dark-mode');
+            }
+            document.documentElement.classList.remove('font-small', 'font-medium', 'font-large');
+            document.documentElement.classList.add(`font-${fontSize}`);
+        }
+
+        function getCurrentConversation() {
+            return conversations.find(c => c.id === currentConversationId);
+        }
+
+        function saveConversations() {
+            try {
+                localStorage.setItem('ai_conversations', JSON.stringify(conversations));
+            } catch (e) {
+                console.error("保存对话记录失败: ", e);
+                // Optionally handle the error, e.g., by notifying the user
+                // or trying to save a smaller subset of the data.
+            }
+        }
+
+        function loadConversations() {
+            const data = localStorage.getItem('ai_conversations');
+            if (data) {
+                try {
+                    conversations = JSON.parse(data);
+                    // Basic data migration/validation for older formats
+                    conversations.forEach(conv => {
+                        if (!conv.settings) {
+                            conv.settings = JSON.parse(JSON.stringify(DEFAULT_SETTINGS));
+                        }
+                        if (!conv.createdAt) {
+                            conv.createdAt = new Date().toISOString();
+                        }
+                        if (conv.messages) {
+                            // 清理历史中可能存在的文件准备消息
+                            conv.messages = conv.messages.filter(msg => 
+                                !msg.content.includes('文件已准备就绪')
+                            );
+                            
+                            conv.messages.forEach(msg => {
+                                if (!msg.id) {
+                                    msg.id = `${msg.role}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+                                }
+                            });
+                        }
+                        // 修复问题3：确保文件上下文字段存在
+                        if (!conv.fileContext) {
+                            conv.fileContext = null;
+                        }
+                    });
+                } catch (e) {
+                    console.error("加载对话记录失败: ", e);
+                    conversations = [];
+                }
+            } else {
+                conversations = [];
+            }
+            updateConversationList();
+        }
+    </script>
 </body>
 </html>
