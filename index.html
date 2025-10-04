@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>四叶草AI</title>
-    <link rel="icon" type="image/x-icon" href="./z.ico" sizes="96x96">
+    <link rel="icon" type="image/x-icon" href="./z.ico" sizes="512x512">
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Font Awesome for icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -1081,6 +1081,7 @@
             </div>
         </div>
     </div>
+    </div>
     <!-- Rename Conversation Modal -->
     <div id="renameConversationModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
         <div class="bg-white rounded-lg p-6 w-96 dark:bg-gray-800">
@@ -1089,14 +1090,15 @@
                 <button id="closeRenameModal" class="text-gray-500 hover:text-gray-700 dark:text-gray-300 dark:hover:text-white"><i class="fas fa-times"></i></button>
             </div>
             <div class="mb-4">
-                <input type="text" id="renameInput" placeholder="输入新标题" class="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"/>
+                <input type="text" id="renameInput" placeholder="输入新标题" class="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-300 dark:border-gray-600 dark:text-black"/>
             </div>
             <div class="flex justify-end space-x-3">
-                <button id="cancelRenameBtn" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition-colors dark:bg-gray-600 dark:text-gray-200 dark:hover:bg-gray-500">取消</button>
+                <button id="cancelRenameBtn" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition-colors dark:bg-gray-600 dark:text-black dark:hover:bg-gray-500">取消</button>
                 <button id="saveRenameBtn" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors">保存</button>
             </div>
         </div>
     </div>
+
     <!-- Delete Confirmation Modal -->
     <div id="deleteConfirmModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
         <div class="bg-white rounded-lg p-6 w-96 dark:bg-gray-800">
@@ -1108,11 +1110,12 @@
                 <p class="text-gray-700 dark:text-gray-300">删除后，该对话将不可恢复。确认删除吗？</p>
             </div>
             <div class="flex justify-end space-x-3">
-                <button id="cancelDeleteBtn" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition-colors dark:bg-gray-600 dark:text-gray-200 dark:hover:bg-gray-500">取消</button>
+                <button id="cancelDeleteBtn" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition-colors dark:bg-gray-600 dark:text-black dark:hover:bg-gray-500">取消</button>
                 <button id="confirmDeleteBtn" class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors">确定</button>
             </div>
         </div>
     </div>
+
     <!-- Message Delete Confirmation Modal -->
     <div id="messageDeleteConfirmModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
         <div class="bg-white rounded-lg p-6 w-96 dark:bg-gray-800">
@@ -1124,7 +1127,7 @@
                 <p class="text-gray-700 dark:text-gray-300">确定要删除这条消息吗？此操作不可撤销。</p>
             </div>
             <div class="flex justify-end space-x-3">
-                <button id="cancelMessageDeleteBtn" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition-colors dark:bg-gray-600 dark:text-gray-200 dark:hover:bg-gray-500">取消</button>
+                <button id="cancelMessageDeleteBtn" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition-colors dark:bg-gray-600 dark:text-black dark:hover:bg-gray-500">取消</button>
                 <button id="confirmMessageDeleteBtn" class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors">确定</button>
             </div>
         </div>
