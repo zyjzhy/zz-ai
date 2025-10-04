@@ -2,9 +2,8 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>四叶草AI</title>
-    <link rel="icon" type="image/x-icon" href="https://youke1.picui.cn/s1/2025/10/03/68dfc64660214.png" sizes="64x64">
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Font Awesome for icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -85,11 +84,12 @@
         .dark-mode { background-color: #111827; color: #f9fafb; }
         .dark-mode .bg-white { background-color: #1f2937; } /* Input backgrounds etc */
         .dark-mode .bg-gray-50 { background-color: #1f2937; }
+        .dark-mode .bg-blue-50 { background-color: rgb(100 100 100)} 
         .dark-mode .text-gray-800 { color: #f9fafb; }
-        .dark-mode .text-gray-700 { color: #e5e7eb; }
+        .dark-mode .text-gray-700 { color: #c1c1c1; }
         .dark-mode .text-gray-600 { color: #d1d5db; }
         .dark-mode .text-gray-500 { color: #9ca3af; }
-        .dark-mode .border-gray-200, .dark-mode .border-gray-300 { border-color: #4b5563; }
+        .dark-mode .border-gray-200, .dark-mode .border-gray-300 { border-color: #4b5563; color: #3b3b3c;}
         .dark-mode .bg-gray-100 { background-color: #374151; }
         .dark-mode .bg-blue-100 { background-color: #1e3a8a; }
         .dark-mode .hover\:bg-gray-100:hover { background-color: #4b5563; }
@@ -228,14 +228,26 @@
         .markdown-content th { background-color: #f3f4f6; }
         .dark-mode .markdown-content th { background-color: #374151; }
         
-        .markdown-content .generated-image { 
-            max-width: 350px; 
-            max-height: 350px;
+        /* 修复问题4：生成的图片使用响应式尺寸 */
+        .generated-image {
+            max-width: min(350px, 90vw) !important;
+            max-height: min(350px, 50vh) !important;
             width: auto;
             height: auto;
-            border-radius: 0.5rem; 
-            margin-top: 0.5rem; 
+            border-radius: 0.5rem;
+            margin-top: 0.5rem;
             object-fit: contain;
+            display: block;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        
+        /* 移动端图片特殊处理 */
+        @media (max-width: 768px) {
+            .generated-image {
+                max-width: 95% !important;
+                max-height: min(300px, 40vh) !important;
+            }
         }
 
         .copy-code-button {
@@ -539,6 +551,196 @@
         margin: 0 auto;
     }
 
+    /* 新增：输入框整体布局优化 */
+    #inputSection {
+        position: sticky;
+        bottom: 0;
+        background: inherit;
+        z-index: 10;
+    }
+
+    /* 输入框工具栏样式优化 */
+    #messageInputContainer {
+        padding-bottom: 0;
+        position: relative;
+    }
+    #imagineCommandDisplay {
+        position: absolute;
+        top: 1rem;
+        left: 1rem;
+        z-index: 5;
+        pointer-events: none;
+    }
+
+    #messageInput {
+        padding-bottom: 1rem !important;
+        border-radius: 0.5rem 0.5rem 0 0 !important;
+    }
+
+    /* 图片生成模式下的输入框左边距 */
+    #messageInput.imagine-mode {
+        padding-left: 6.5rem !important;
+    }
+
+    /* 工具栏区域样式 */
+    .input-toolbar {
+        background-color: #f9fafb;
+        border-top: 1px solid #e5e7eb;
+        padding: 0.75rem 1rem;
+        border-radius: 0 0 0.5rem 0.5rem;
+    }
+
+    .dark-mode .input-toolbar {
+        background-color: #374151;
+        border-top-color: #4b5563;
+    }
+
+    /* 新增：移动端输入框优化 */
+    @media (max-width: 768px) {
+        #inputSection {
+            padding: 0.5rem;
+            background: inherit;
+        }
+
+        .imagine-mode #messageInput {
+            padding-left: 6rem !important;
+            font-size: 16px; /* 防止iOS缩放 */
+        }
+        
+        #imagineCommandDisplay {
+            top: 0.75rem;
+            left: 0.75rem;
+        }
+        
+        #messageInput {
+            min-height: 50px !important;
+            max-height: 100px !important;
+            font-size: 16px; /* 防止iOS缩放 */
+            padding: 0.75rem !important;
+            border-radius: 0.5rem 0.5rem 0 0 !important;
+        }
+        
+        .input-toolbar {
+            padding: 0.5rem 0.75rem;
+            border-radius: 0 0 0.5rem 0.5rem;
+        }
+        
+        /* 移动端工具栏布局调整 */
+        .input-toolbar .flex.items-center.justify-between {
+            flex-wrap: nowrap;
+            gap: 0.5rem;
+        }
+        
+        /* 左侧按钮组优化 */
+        .input-toolbar .flex.items-center.space-x-2 {
+            flex-shrink: 0;
+        }
+        
+        /* 模型选择按钮在移动端简化 */
+        #modelSelectBtn {
+            padding: 0.375rem 0.5rem;
+            font-size: 0.75rem;
+            max-width: 120px;
+            overflow: hidden;
+        }
+        
+        #modelSelectBtn span {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            max-width: 60px;
+        }
+        
+        /* 图标按钮尺寸调整 */
+        #attachFileBtn,
+        #imageGenBtn {
+            width: 1.5rem;
+            height: 1.5rem;
+            flex-shrink: 0;
+        }
+        
+        /* 右侧区域优化 */
+        .input-toolbar .flex.items-center.space-x-3 {
+            flex-shrink: 0;
+        }
+        
+        /* 字数统计优化 */
+        #charCount {
+            font-size: 0.7rem;
+            white-space: nowrap;
+        }
+        
+        /* 发送按钮优化 */
+        #sendMessageBtn {
+            width: 2.5rem;
+            height: 2.5rem;
+            flex-shrink: 0;
+        }
+        /* 示例卡片样式优化 */
+        #promptSuggestions {
+            max-width: 90% !important; /* 设置最大宽度为95%，不占满全屏 */
+            width: 100%;
+            margin: 0 auto; /* 居中显示 */
+            padding: 0 0.5rem; /* 添加左右内边距 */
+
+        .prompt-card {
+            padding: 0.75rem !important; /* 从1rem减小到0.75rem */
+            margin: 0; /* 移除外边距 */
+        }
+        
+        .prompt-card p:first-child {
+            font-size: 0.9rem !important; /* 减小标题字体 */
+            margin-bottom: 0.25rem;
+        }
+        
+        .prompt-card p:last-child {
+            font-size: 0.75rem !important; /* 减小描述字体 */
+            line-height: 1.2;
+        }
+        
+        /* 确保在移动端输入框不会超出屏幕 */
+        #messageInputContainer {
+            max-height: 50vh;
+            overflow: hidden;
+        }
+        
+        #messageInput {
+            max-height: calc(50vh - 60px); /* 为工具栏预留空间 */
+        }
+    }
+
+    /* 超小屏幕额外优化 */
+    @media (max-width: 480px) {
+        #modelSelectBtn {
+            max-width: 100px;
+        }
+        .imagine-mode #messageInput {
+            padding-left: 6rem !important;
+        }
+        
+        #modelSelectBtn span {
+            max-width: 50px;
+        }
+        
+        .input-toolbar .flex.items-center.justify-between {
+            gap: 0.25rem;
+        }
+        
+        #charCount {
+            font-size: 0.65rem;
+        }
+    }
+
+    /* 确保深色模式样式正确 */
+    .dark-mode #messageInput {
+        background-color: transparent;
+    }
+
+    .dark-mode .input-toolbar {
+        background-color: #1f2937;
+    }
+
+
     </style>
 </head>
 <body class="bg-gray-50 h-screen flex overflow-hidden dark:bg-gray-900">
@@ -618,7 +820,7 @@
                     <div class="w-16 h-16 clover-bg rounded-full flex items-center justify-center mx-auto mb-4">
                         <div class="clover-icon w-8 h-8"></div>
                     </div>
-                    <h2 class="text-2xl font-medium text-gray-800 dark:text-gray-200">愿今天🍀能帮助到您？</h2>
+                    <h2 class="text-2xl font-medium text-gray-800 dark:text-gray-200">今天有什么可以帮到你？</h2>
                 </div>
                 
                 <!-- Prompt Suggestions -->
@@ -671,40 +873,45 @@
                         <textarea 
                             id="messageInput" 
                             placeholder="给 四叶草AI 发送消息，或将文件拖拽到这里"
-                            class="w-full p-4 pr-20 pb-12 border-0 rounded-lg focus:outline-none resize-none bg-transparent dark:text-gray-200 dark:placeholder-gray-400"
-                            style="min-height: 64px; box-sizing: border-box;"
+                            class="w-full p-4 pr-4 border-0 rounded-t-lg focus:outline-none resize-none bg-transparent dark:text-gray-200 dark:placeholder-gray-400"
+                            style="min-height: 64px; max-height: 300px; box-sizing: border-box; padding-left: 1rem;"
                         ></textarea>
-                        <!-- /imagine 命令显示区域 -->
+                        
+                        <!-- /imagine 命令显示区域 - 重新定位 -->
                         <div id="imagineCommandDisplay" class="absolute top-4 left-4 hidden">
                             <span class="imagine-command">/imagine</span>
                         </div>
                     </div>
-                     <!-- Character Count -->
-                    <div id="charCount" class="absolute bottom-3 right-20 text-xs text-gray-400">0/128000</div>
                     
-                    <!-- Bottom Toolbar -->
-                    <div class="absolute bottom-3 left-3 right-3 flex items-center justify-between">
-                        <div class="flex items-center space-x-1">
-                            <button id="modelSelectBtn" class="px-3 py-1.5 text-sm text-gray-600 hover:bg-gray-100 rounded-md flex items-center transition-colors dark:text-gray-300 dark:hover:bg-gray-700">
-                                <i class="fas fa-brain mr-1.5"></i>
-                                <span id="currentModelName"></span>
-                            </button>
+                    <!-- 底部工具栏容器，与文本区域分隔 -->
+                    <div class="border-t border-gray-200 dark:border-gray-600 px-4 py-3 bg-gray-50 dark:bg-gray-700 rounded-b-lg">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center space-x-2">
+                                <button id="modelSelectBtn" class="px-3 py-1.5 text-sm text-gray-600 hover:bg-gray-100 rounded-md flex items-center transition-colors dark:text-gray-300 dark:hover:bg-gray-600">
+                                    <i class="fas fa-brain mr-1.5"></i>
+                                    <span id="currentModelName">DeepSeek-R1-Distill</span>
+                                </button>
+                                
+                                <button id="attachFileBtn" class="w-8 h-8 text-gray-500 hover:bg-gray-100 rounded-md flex items-center justify-center transition-colors dark:text-gray-400 dark:hover:bg-gray-600" title="上传文件">
+                                    <i class="fas fa-paperclip"></i>
+                                </button>
+                                
+                                <button id="imageGenBtn" class="w-8 h-8 text-gray-500 hover:bg-gray-100 rounded-md flex items-center justify-center transition-colors dark:text-gray-400 dark:hover:bg-gray-600" title="图片生成">
+                                    <i class="fas fa-image"></i>
+                                </button>
+                            </div>
                             
-                            <button id="attachFileBtn" class="w-8 h-8 text-gray-500 hover:bg-gray-100 rounded-md flex items-center justify-center transition-colors dark:text-gray-400 dark:hover:bg-gray-700" title="上传文件">
-                                <i class="fas fa-paperclip"></i>
-                            </button>
-                            
-                            <button id="imageGenBtn" class="w-8 h-8 text-gray-500 hover:bg-gray-100 rounded-md flex items-center justify-center transition-colors dark:text-gray-400 dark:hover:bg-gray-700" title="图片生成">
-                                <i class="fas fa-image"></i>
-                            </button>
+                            <div class="flex items-center space-x-3">
+                                <!-- 字数统计 -->
+                                <div id="charCount" class="text-xs text-gray-400">0/128000</div>
+                                
+                                <button id="sendMessageBtn" class="w-9 h-9 bg-blue-500 text-white rounded-lg flex items-center justify-center hover:bg-blue-600 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed" title="发送">
+                                    <i id="sendBtnIcon" class="fas fa-arrow-up"></i>
+                                </button>
+                            </div>
                         </div>
-                        
-                        <button id="sendMessageBtn" class="w-9 h-9 bg-blue-500 text-white rounded-lg flex items-center justify-center hover:bg-blue-600 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed" title="发送">
-                            <i id="sendBtnIcon" class="fas fa-arrow-up"></i>
-                        </button>
                     </div>
                 </div>
-            </div>
         </div>
     </div>
 
@@ -731,7 +938,7 @@
                     <!-- Model Selection -->
                     <div>
                         <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">对话模型</label>
-                        <select id="chatModelSelect" class="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"></select>
+                        <select id="chatModelSelect" class="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-300 text-black"><option value="deepseek-ai/DeepSeek-R1-Distill-Qwen-7B" data-max-context="128000" data-supports-thinking="true">DeepSeek-R1-Distill (✨支持思考)</option><option value="THUDM/glm-4-9b-chat" data-max-context="128000" data-supports-thinking="true">GLM-4-9B-Chat (✨支持思考)</option><option value="Qwen/Qwen2-7B-Instruct" data-max-context="32000" data-supports-thinking="true">Qwen2-7B-Instruct (✨支持思考)</option><option value="Qwen/Qwen2.5-7B-Instruct" data-max-context="32000" data-supports-thinking="true">Qwen2.5-7B-Instruct (✨支持思考)</option><option value="Qwen/Qwen3-8B" data-max-context="128000" data-supports-thinking="true">Qwen3-8B (✨支持思考)</option><option value="deepseek-ai/DeepSeek-R1-0528-Qwen3-8B" data-max-context="128000" data-supports-thinking="false">DeepSeek-R1-0528</option><option value="THUDM/GLM-4.1V-9B-Thinking" data-max-context="64000" data-supports-thinking="false">GLM-4.1V-9B-Thinking</option><option value="THUDM/GLM-Z1-9B-0414" data-max-context="128000" data-supports-thinking="false">GLM-Z1-9B-0414</option><option value="internlm/internlm2_5-7b-chat" data-max-context="32000" data-supports-thinking="false">InternLM2.5-7B-Chat</option><option value="Qwen/Qwen2.5-Coder-7B-Instruct" data-max-context="32000" data-supports-thinking="false">Qwen2.5-Coder-7B-Instruct</option></select>
                     </div>
 
                     <!-- Advanced Parameters -->
@@ -747,9 +954,9 @@
                                 <input id="temperatureSlider" type="range" min="0" max="1" step="0.01" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-600">
                             </div>
                             <!-- Max Tokens -->
-                             <div>
+                            <div>
                                 <label for="maxTokensInput" class="block text-sm font-medium text-gray-700 dark:text-gray-300">最大输出 (Max Tokens)</label>
-                                <input type="number" id="maxTokensInput" min="1" max="4096" class="mt-1 w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                                <input type="number" id="maxTokensInput" min="1" max="4096" class="mt-1 w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-300 text-black">
                             </div>
                             <!-- Context Rounds -->
                             <div>
@@ -761,7 +968,7 @@
                             </div>
                             <!-- Max Context Length Info -->
                             <div class="text-sm text-gray-500 dark:text-gray-400">
-                                当前模型最大上下文长度：<span id="maxContextLength" class="font-semibold"></span> Tokens
+                                当前模型最大上下文长度：<span id="maxContextLength" class="font-semibold">128,000</span> Tokens
                             </div>
                         </div>
                     </div>
@@ -769,7 +976,7 @@
                     <!-- Other Settings -->
                     <div>
                         <label for="streamToggle" class="flex items-center cursor-pointer">
-                            <input type="checkbox" id="streamToggle" class="form-checkbox h-5 w-5 text-blue-600 rounded focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:checked:bg-blue-600">
+                            <input type="checkbox" id="streamToggle" class="form-checkbox h-5 w-5 text-blue-600 rounded focus:ring-blue-500 dark:bg-gray-300">
                             <span class="ml-2 text-sm text-gray-700 dark:text-gray-300">流式输出</span>
                         </label>
                     </div>
@@ -782,13 +989,13 @@
                     <!-- Model Selection -->
                     <div>
                         <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">图像模型</label>
-                        <select id="imageModelSelect" class="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"></select>
+                        <select id="imageModelSelect" class="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-300 text-black"><option value="Kwai-Kolors/Kolors">Kwai Kolors</option></select>
                     </div>
                     
                     <!-- Image Size Selection -->
                     <div>
                         <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">图片尺寸</label>
-                        <select id="imageSizeSelect" class="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                        <select id="imageSizeSelect" class="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-300 text-black">
                             <option value="1024x1024">1024x1024 (1:1)</option>
                             <option value="960x1280">960x1280 (3:4)</option>
                             <option value="768x1024">768x1024 (3:4)</option>
@@ -853,16 +1060,16 @@
                 <button id="closePageSettingsModal" class="text-gray-500 hover:text-gray-700 dark:text-gray-300 dark:hover:text-white"><i class="fas fa-times"></i></button>
             </div>
             <div class="mb-4">
-                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">主题设置</label>
-                <select id="themeSelect" class="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                <label class="block text-sm font-medium dark:text-gray-300 mb-2">主题设置</label>
+                <select id="themeSelect" class="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-300 text-black">
                     <option value="light">浅色模式</option>
                     <option value="dark">深色模式</option>
                     <option value="auto">跟随系统</option>
                 </select>
             </div>
             <div class="mb-6">
-                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">字体大小</label>
-                <select id="fontSizeSelect" class="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                <label class="block text-sm font-medium dark:text-gray-300 mb-2">字体大小</label>
+                <select id="fontSizeSelect" class="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-300 text-black">
                     <option value="small">小</option>
                     <option value="medium" selected>中</option>
                     <option value="large">大</option>
@@ -929,16 +1136,16 @@
                 // Models that SUPPORT thinking mode
                 { id: 'deepseek-ai/DeepSeek-R1-Distill-Qwen-7B', name: 'DeepSeek-R1-Distill', maxContext: 128000, supportsThinking: true },
                 { id: 'THUDM/glm-4-9b-chat', name: 'GLM-4-9B-Chat', maxContext: 128000, supportsThinking: true },
+                
                 { id: 'Qwen/Qwen2-7B-Instruct', name: 'Qwen2-7B-Instruct', maxContext: 32000, supportsThinking: true },
                 { id: 'Qwen/Qwen2.5-7B-Instruct', name: 'Qwen2.5-7B-Instruct', maxContext: 32000, supportsThinking: true },
                 { id: 'Qwen/Qwen3-8B', name: 'Qwen3-8B', maxContext: 128000, supportsThinking: true },
                 
                 // Models that DO NOT support thinking mode
-                
-                { id: 'deepseek-ai/DeepSeek-R1-0528-Qwen3-8B', name: 'DeepSeek-R1-0528 (✨支持思考)', maxContext: 128000, supportsThinking: false },
-                { id: 'THUDM/GLM-4.1V-9B-Thinking', name: 'GLM-4.1V-9B-Thinking (✨支持思考)', maxContext: 64000, supportsThinking: false },
-                { id: 'THUDM/GLM-Z1-9B-0414', name: 'GLM-Z1-9B-0414', maxContext: 128000, supportsThinking: false },
                 { id: 'Qwen/Qwen2.5-Coder-7B-Instruct', name: 'Qwen2.5-Coder-7B-Instruct', maxContext: 32000, supportsThinking: false },
+                { id: 'deepseek-ai/DeepSeek-R1-0528-Qwen3-8B', name: 'DeepSeek-R1-0528', maxContext: 128000, supportsThinking: false },
+                { id: 'THUDM/GLM-Z1-9B-0414', name: 'GLM-Z1-9B-0414', maxContext: 128000, supportsThinking: false },
+                { id: 'THUDM/GLM-4.1V-9B-Thinking', name: 'GLM-4.1V-9B-Thinking', maxContext: 64000, supportsThinking: false },
                 { id: 'internlm/internlm2_5-7b-chat', name: 'InternLM2.5-7B-Chat', maxContext: 32000, supportsThinking: false },
             ],
             image: [
@@ -948,7 +1155,7 @@
 
         const DEFAULT_SETTINGS = {
             chat: {
-                modelId: 'THUDM/glm-4-9b-chat',
+                modelId: 'deepseek-ai/DeepSeek-R1-Distill-Qwen-7B',
                 temperature: 0.7,
                 maxTokens: 4096, // 确保不超过4096
                 contextRounds: 10,
@@ -1141,7 +1348,7 @@
                     handleSendStopClick();
                 }
                 
-                // 修复问题1：改进 /imagine 命令的删除逻辑
+                // 改进的删除逻辑
                 if (isImageGenMode && e.key === 'Backspace') {
                     const currentValue = messageInput.value;
                     const cursorPosition = messageInput.selectionStart;
@@ -1153,16 +1360,24 @@
                         toggleImageGenMode(false);
                         return;
                     }
-                    
-                    // 如果用户正在删除 /imagine 命令之后的内容，允许正常删除
-                    // 不阻止默认行为，让浏览器正常处理退格键
                 }
             });
             
             messageInput.addEventListener('input', () => {
                 updateCharCount();
-                // 修复问题1：检测是否输入了 /imagine 命令
-                checkImageGenMode();
+                // 移除自动检测 /imagine 命令的逻辑，避免冲突
+            });
+
+            // 新增：输入框失去焦点时确保样式稳定
+            messageInput.addEventListener('blur', () => {
+                if (!isImageGenMode) {
+                    messageInput.style.paddingLeft = '';
+                }
+            });
+
+            // 新增：防止iOS缩放
+            messageInput.addEventListener('touchstart', function() {
+                this.style.fontSize = '16px'; // 阻止iOS缩放
             });
 
             newChatBtn.addEventListener('click', createNewConversation);
@@ -1281,22 +1496,36 @@
             chatContainer.scrollTop = chatContainer.scrollHeight;
         }
 
-        function updateCharCount() {
-            const conversation = getCurrentConversation();
-            if (!conversation) return;
+    // 更新 updateCharCount 函数，移除可能影响布局的样式
+    function updateCharCount() {
+        const conversation = getCurrentConversation();
+        if (!conversation) return;
 
-            const settings = conversation.settings.chat;
-            const selectedModelConfig = MODELS_CONFIG.chat.find(m => m.id === settings.modelId);
-            const currentMax = isImageGenMode ? 1000 : (selectedModelConfig?.maxContext || 128000);
-            
-            const len = messageInput.value.length;
-            charCount.textContent = `${len}/${currentMax.toLocaleString()}`;
-            charCount.classList.toggle('text-red-500', len > currentMax);
-            
-            messageInput.style.height = 'auto';
-            const newHeight = Math.min(messageInput.scrollHeight, 300);
-            messageInput.style.height = newHeight + 'px';
+        const settings = conversation.settings.chat;
+        const selectedModelConfig = MODELS_CONFIG.chat.find(m => m.id === settings.modelId);
+        const currentMax = isImageGenMode ? 1000 : (selectedModelConfig?.maxContext || 128000);
+        
+        const len = messageInput.value.length;
+        charCount.textContent = `${len}/${currentMax.toLocaleString()}`;
+        charCount.classList.toggle('text-red-500', len > currentMax);
+        
+        // 只保留基本的文本区域高度自适应
+        messageInput.style.height = 'auto';
+        const newHeight = Math.min(messageInput.scrollHeight, 300);
+        messageInput.style.height = newHeight + 'px';
+        
+        // 移动端特殊处理：确保不会超出最大高度
+        if (window.innerWidth <= 768) {
+            const maxMobileHeight = window.innerHeight * 0.5 - 60; // 屏幕高度的50%减去工具栏高度
+            messageInput.style.maxHeight = `${Math.min(300, maxMobileHeight)}px`;
+            messageInput.style.overflowY = messageInput.scrollHeight > maxMobileHeight ? 'auto' : 'hidden';
         }
+    }
+
+    // 在窗口大小变化时重新计算布局
+    window.addEventListener('resize', () => {
+        updateCharCount();
+    });
 
         // --- Core Messaging & API Calls ---
         
@@ -1362,7 +1591,8 @@
             updateUILayout();
 
             if (isImageGenMode) {
-                const prompt = message.substring(IMAGE_GEN_PREFIX.length).trim();
+                // 修复：直接使用用户输入的内容作为提示词，不需要截取
+                const prompt = message.trim();
                 if(prompt) generateImage(prompt);
                 toggleImageGenMode(false);
             } else {
@@ -1640,7 +1870,7 @@
                 
                 if (!response.ok) {
                     let errorMessage = `图片生成失败, 状态码: ${response.status}`;
-                     try {
+                    try {
                         const errorData = await response.json();
                         errorMessage += ` - ${errorData.error?.message || JSON.stringify(errorData)}`;
                     } catch (e) {
@@ -1654,6 +1884,7 @@
                 
                 if (data.data && data.data[0] && data.data[0].url) {
                     const imageUrl = data.data[0].url;
+                    // 修复：使用完整的提示词，而不是截断的版本
                     const assistantMessageContent = `<p>根据您的描述"${md.utils.escapeHtml(prompt)}"，我生成了以下图片：</p><img src="${imageUrl}" alt="${md.utils.escapeHtml(prompt)}" class="generated-image">`;
                     const assistantMessageId = 'assistant-' + Date.now();
 
@@ -1664,7 +1895,9 @@
                         updateConversationTitle(conversation, `图片：${prompt}`);
                     }
                     saveConversations();
-                } else { throw new Error('API响应中未找到图片URL'); }
+                } else { 
+                    throw new Error('API响应中未找到图片URL'); 
+                }
             } catch (error) {
                 hideTypingIndicator();
                 if (error.name === 'AbortError') {
@@ -1683,7 +1916,7 @@
 
         // 修复问题1和问题3：改进的图片生成模式切换函数
         function toggleImageGenMode(forceState, initialPrompt = '') {
-            const currentValue = messageInput.value; // 获取原始输入值，用于检查前缀
+            const currentValue = messageInput.value;
             const wasImageGenMode = isImageGenMode;
             
             // 确定新的状态
@@ -1692,25 +1925,29 @@
             if (isImageGenMode) {
                 // 进入图片生成模式
                 imageGenBtn.classList.add('bg-blue-100', 'text-blue-600', 'dark:bg-blue-900', 'dark:text-blue-300');
-                messageInput.placeholder = "输入图片描述，然后按发送..."; // 设置图片模式的placeholder
+                messageInput.placeholder = "输入图片描述，然后按发送...";
                 
-                // 显示 /imagine 命令提示（UI元素）
+                // 使用CSS类来控制命令显示和文本区域padding
+                messageInputContainer.classList.add('imagine-mode');
                 imagineCommandDisplay.classList.remove('hidden');
                 
-                // 修复问题1：增大paddingLeft的值，确保输入框内容和placeholder不会与/imagine命令重叠
-                // 5.5rem 可能会不够，我们将其设置为 7rem，为 '/imagine' 及其内边距留出更多空间
-                messageInput.style.paddingLeft = '7rem'; 
-                
                 let newInputValue = currentValue;
-                if (currentValue.startsWith(IMAGE_GEN_PREFIX)) {
-                    // 如果输入框内容已经包含 /imagine 前缀，则从实际输入框中移除它
-                    // 这样输入框内部只保留实际的图片描述
-                    newInputValue = currentValue.substring(IMAGE_GEN_PREFIX.length);
-                } else if (!wasImageGenMode && initialPrompt) {
-                    // 如果刚切换到图片模式，并且有初始提示，则使用它
-                    newInputValue = initialPrompt;
+                
+                if (!wasImageGenMode) {
+                    // 从普通模式切换到图片模式
+                    if (initialPrompt) {
+                        // 如果有初始提示，使用它
+                        newInputValue = initialPrompt;
+                    } else if (currentValue.startsWith(IMAGE_GEN_PREFIX)) {
+                        // 如果已经包含前缀，移除前缀
+                        newInputValue = currentValue.substring(IMAGE_GEN_PREFIX.length);
+                    }
+                    // 否则保持原内容
+                } else {
+                    // 已经在图片模式下，保持当前内容
+                    newInputValue = currentValue;
                 }
-                // 否则，如果当前值没有前缀且没有初始提示，保持当前值不变
+                
                 messageInput.value = newInputValue;
                 
                 // 将光标定位到文本末尾
@@ -1720,22 +1957,27 @@
             } else {
                 // 退出图片生成模式
                 imageGenBtn.classList.remove('bg-blue-100', 'text-blue-600', 'dark:bg-blue-900', 'dark:text-blue-300');
-                messageInput.placeholder = "给 AI智能助手 发送消息，或将文件拖拽到这里"; // 恢复默认placeholder
+                messageInput.placeholder = "给 四叶草AI 发送消息，或将文件拖拽到这里";
                 
-                // 隐藏 /imagine 命令提示
+                // 移除CSS类
+                messageInputContainer.classList.remove('imagine-mode');
                 imagineCommandDisplay.classList.add('hidden');
-                // 恢复默认的paddingLeft
-                messageInput.style.paddingLeft = '1rem'; 
                 
-                // 当退出模式时，由于进入时已经将 /imagine 前缀从输入框内容中移除，
-                // 所以此处无需再进行移除操作。输入框内容已经是纯粹的用户输入。
-                // 保持此处的逻辑不变，虽然在大多数情况下它不会再修改 `messageInput.value`。
+                // 如果当前内容以 /imagine 开头，移除前缀
                 if (currentValue.startsWith(IMAGE_GEN_PREFIX)) {
                     messageInput.value = currentValue.substring(IMAGE_GEN_PREFIX.length);
                 }
             }
+            
             updateCharCount();
-            messageInput.focus();
+            
+            // 移动端特殊处理：确保输入框稳定
+            if (window.innerWidth <= 768) {
+                setTimeout(() => {
+                    messageInput.blur();
+                    setTimeout(() => messageInput.focus(), 50);
+                }, 100);
+            }
         }
         
         // 修复问题1：检测是否输入了 /imagine 命令
@@ -2413,9 +2655,3 @@
     </script>
 </body>
 </html>
-
-
-
-
-
-
