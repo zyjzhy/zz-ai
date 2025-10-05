@@ -632,7 +632,7 @@
 
             /* 聊天框标题字体缩小 */
             #chatTitle {
-                font-size: 1、0.75rem !important; /* 从原来的1.125rem减小到1rem */
+                font-size: 0.6rem !important; 
             }
             
             #messageInput {
@@ -1929,7 +1929,7 @@
                 if (data.data && data.data[0] && data.data[0].url) {
                     const imageUrl = data.data[0].url;
                     // 修复：使用完整的提示词，而不是截断的版本
-                    const assistantMessageContent = `<p>根据您的描述"${md.utils.escapeHtml(prompt)}"，我生成了以下图片：</p><img src="${imageUrl}" alt="${md.utils.escapeHtml(prompt)}" class="generated-image">`;
+                    const assistantMessageContent = `<p>根据您的描述"${md.utils.escapeHtml(prompt)}"，生成以下图片(时效1h，移动端长按保存，电脑端右键保存)：</p><img src="${imageUrl}" alt="${md.utils.escapeHtml(prompt)}" class="generated-image">`;
                     const assistantMessageId = 'assistant-' + Date.now();
 
                     addMessageToChat('assistant', assistantMessageContent, true, assistantMessageId);
@@ -2699,5 +2699,4 @@
     </script>
 </body>
 </html>
-
 
