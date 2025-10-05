@@ -93,13 +93,14 @@
         .dark-mode .border-gray-200, .dark-mode .border-gray-300 { border-color: #4b5563; color: #3b3b3c;}
         .dark-mode .bg-gray-100 { background-color: #374151; }
         .dark-mode .bg-blue-100 { background-color: #1e3a8a; }
-        .dark-mode .hover\:bg-gray-100:hover { background-color: #4b5563; }
+        .dark-mode .hover:bg-gray-100:hover { background-color: #4b5563; }
         .dark-mode .conversation-dropdown { background: #374151; border-color: #4b5563; }
         .dark-mode .conversation-dropdown button { color: #f9fafb; }
         .dark-mode .conversation-dropdown button:hover { background-color: #4b5563; }
         .dark-mode .prompt-card:hover { background-color: #374151; }
         .dark-mode input[type=range]::-webkit-slider-thumb { background: #60a5fa; }
         .dark-mode input[type=range]::-moz-range-thumb { background: #60a5fa; }
+        .dark-mode #messageInput {color: #f9fafb}
         
         /* Font Size Classes */
         html.font-small { font-size: 14px; }
@@ -599,6 +600,21 @@
         /* 新增：移动端输入框优化 */
         @media (max-width: 768px) {
             
+            /* 侧边栏标题字体缩小 */
+            #sidebar .p-4 .font-semibold {
+                font-size: 0.9rem !important;
+            }
+            
+            /* 侧边栏按钮字体缩小 */
+            #sidebar button {
+                font-size: 0.8rem !important;
+            }
+            
+            /* 新对话和页面设置按钮特定样式 */
+            #newChatBtn, #pageSettingsBtn {
+                font-size: 0.8rem !important;
+                padding: 0.5rem 0.75rem !important;
+            }
             #inputSection {
                 padding: 0.5rem;
                 background: inherit;
@@ -2678,3 +2694,4 @@
     </script>
 </body>
 </html>
+
