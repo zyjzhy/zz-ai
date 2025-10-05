@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>四叶草AI</title>
-    <link rel="icon" type="image/x-icon" href="./z.ico" sizes="96x96">
+    <link rel="icon" type="image/x-icon" href="https://youke1.picui.cn/s1/2025/10/05/68e2252a18c28.ico" sizes="64x64">
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Font Awesome for icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -546,171 +546,188 @@
         }
 
         /* 限制聊天区域整体宽度 */
-    .chat-header-container, .chat-container-wrapper, .input-section-wrapper {
-        width: 100%;
-        max-width: 800px;
-        margin: 0 auto;
-    }
+        .chat-header-container, .chat-container-wrapper, .input-section-wrapper {
+            width: 100%;
+            max-width: 800px;
+            margin: 0 auto;
+        }
 
-    /* 新增：输入框整体布局优化 */
-    #inputSection {
-        position: sticky;
-        bottom: 0;
-        background: inherit;
-        z-index: 10;
-    }
-
-    /* 输入框工具栏样式优化 */
-    #messageInputContainer {
-        padding-bottom: 0;
-        position: relative;
-    }
-    #imagineCommandDisplay {
-        position: absolute;
-        top: 1rem;
-        left: 1rem;
-        z-index: 5;
-        pointer-events: none;
-    }
-
-    #messageInput {
-        padding-bottom: 1rem !important;
-        border-radius: 0.5rem 0.5rem 0 0 !important;
-    }
-
-    /* 图片生成模式下的输入框左边距 */
-    #messageInput.imagine-mode {
-        padding-left: 6.5rem !important;
-    }
-
-    /* 工具栏区域样式 */
-    .input-toolbar {
-        background-color: #f9fafb;
-        border-top: 1px solid #e5e7eb;
-        padding: 0.75rem 1rem;
-        border-radius: 0 0 0.5rem 0.5rem;
-    }
-
-    .dark-mode .input-toolbar {
-        background-color: #374151;
-        border-top-color: #4b5563;
-    }
-
-    /* 新增：移动端输入框优化 */
-    @media (max-width: 768px) {
-        
+        /* 新增：输入框整体布局优化 */
         #inputSection {
-            padding: 0.5rem;
+            position: sticky;
+            bottom: 0;
             background: inherit;
+            z-index: 10;
         }
 
-        .imagine-mode #messageInput {
-            padding-left: 6rem !important;
-            font-size: 16px; /* 防止iOS缩放 */
+        /* 输入框工具栏样式优化 */
+        #messageInputContainer {
+            padding-bottom: 0;
+            position: relative;
         }
-        
         #imagineCommandDisplay {
-            top: 0.75rem;
-            left: 0.75rem;
+            position: absolute;
+            top: 1rem;
+            left: 1rem;
+            z-index: 5;
+            pointer-events: none;
         }
-        
+
         #messageInput {
-            min-height: 50px !important;
-            max-height: 100px !important;
-            font-size: 16px; /* 防止iOS缩放 */
-            padding: 0.75rem !important;
+            padding-bottom: 1rem !important;
             border-radius: 0.5rem 0.5rem 0 0 !important;
         }
-        
+
+        /* 图片生成模式下的输入框左边距 */
+        #messageInput.imagine-mode {
+            padding-left: 6.5rem !important;
+        }
+
+        /* 工具栏区域样式 */
         .input-toolbar {
-            padding: 0.5rem 0.75rem;
+            background-color: #f9fafb;
+            border-top: 1px solid #e5e7eb;
+            padding: 0.75rem 1rem;
             border-radius: 0 0 0.5rem 0.5rem;
         }
-        
-        /* 移动端工具栏布局调整 */
-        .input-toolbar .flex.items-center.justify-between {
-            flex-wrap: nowrap;
-            gap: 0.5rem;
-        }
-        
-        /* 左侧按钮组优化 */
-        .input-toolbar .flex.items-center.space-x-2 {
-            flex-shrink: 0;
-        }
-    }
-        
-        /* 模型选择按钮在移动端简化 */
-        #modelSelectBtn {
-            padding: 0.375rem 0.5rem;
-            font-size: 0.75rem;
-            max-width: 120px;
-            overflow: hidden;
-        }
-        
-        #modelSelectBtn span {
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-            max-width: 60px;
-        }
-        
-        /* 图标按钮尺寸调整 */
-        #attachFileBtn,
-        #imageGenBtn {
-            width: 1.5rem;
-            height: 1.5rem;
-            flex-shrink: 0;
-        }
-        
-        /* 右侧区域优化 */
-        .input-toolbar .flex.items-center.space-x-3 {
-            flex-shrink: 0;
-        }
-        
-        /* 字数统计优化 */
-        #charCount {
-            font-size: 0.7rem;
-            white-space: nowrap;
-        }
-        
-        /* 发送按钮优化 */
-        #sendMessageBtn {
-            width: 2.5rem;
-            height: 2.5rem;
-            flex-shrink: 0;
-        }
-        /* 示例卡片样式优化 */
-        #promptSuggestions {
-            max-width: 90% !important; /* 设置最大宽度为95%，不占满全屏 */
-            width: 100%;
-            margin: 0 auto; /* 居中显示 */
-            padding: 0 0.5rem; /* 添加左右内边距 */
 
-        .prompt-card {
-            padding: 0.75rem !important; /* 从1rem减小到0.75rem */
-            margin: 0; /* 移除外边距 */
+        .dark-mode .input-toolbar {
+            background-color: #374151;
+            border-top-color: #4b5563;
         }
+
+        /* 新增：移动端输入框优化 */
+        @media (max-width: 768px) {
+            
+            #inputSection {
+                padding: 0.5rem;
+                background: inherit;
+            }
+
+            .imagine-mode #messageInput {
+                padding-left: 6rem !important;
+                font-size: 16px; /* 防止iOS缩放 */
+            }
+            
+            #imagineCommandDisplay {
+                top: 0.75rem;
+                left: 0.75rem;
+            }
+            
+            #messageInput {
+                min-height: 50px !important;
+                max-height: 100px !important;
+                font-size: 16px; /* 防止iOS缩放 */
+                padding: 0.75rem !important;
+                border-radius: 0.5rem 0.5rem 0 0 !important;
+            }
+            .dark-mode #messageInput {
+                color: white;
+            }
+            .input-toolbar {
+                padding: 0.5rem 0.75rem;
+                border-radius: 0 0 0.5rem 0.5rem;
+            }
+            
+            /* 移动端工具栏布局调整 */
+            .input-toolbar .flex.items-center.justify-between {
+                flex-wrap: nowrap;
+                gap: 0.5rem;
+            }
+            
+            /* 左侧按钮组优化 */
+            .input-toolbar .flex.items-center.space-x-2 {
+                flex-shrink: 0;
+            }
         
-        .prompt-card p:first-child {
-            font-size: 0.9rem !important; /* 减小标题字体 */
-            margin-bottom: 0.25rem;
+            
+            /* 模型选择按钮在移动端简化 */
+            #modelSelectBtn {
+                padding: 0.375rem 0.5rem;
+                font-size: 0.75rem;
+                max-width: 120px;
+                overflow: hidden;
+            }
+            
+            #modelSelectBtn span {
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+                max-width: 60px;
+            }
+            
+            /* 图标按钮尺寸调整 */
+            #attachFileBtn,
+            #imageGenBtn {
+                width: 1.5rem;
+                height: 1.5rem;
+                flex-shrink: 0;
+            }
+            
+            /* 右侧区域优化 */
+            .input-toolbar .flex.items-center.space-x-3 {
+                flex-shrink: 0;
+            }
+            
+            /* 隐藏字数统计 */
+            #charCount {
+                display: none !important;
+            }
+            
+            /* 隐藏文件内容识别框 */
+            #fileContentDisplay {
+                display: none !important;
+            }
+            
+            /* 调整工具栏布局，为隐藏元素后的空间重新分配 */
+            .input-toolbar .flex.items-center.justify-between {
+                justify-content: space-between;
+            }
+            
+            /* 确保右侧按钮组对齐 */
+            .input-toolbar .flex.items-center.space-x-3 {
+                margin-left: auto;
+            }
+            
+            /* 发送按钮优化 */
+            #sendMessageBtn {
+                width: 2.5rem;
+                height: 2.5rem;
+                flex-shrink: 0;
+            }
+            /* 示例卡片样式优化 */
+            #promptSuggestions {
+                max-width: 90% !important; /* 设置最大宽度为95%，不占满全屏 */
+                width: 100%;
+                margin: 0 auto; /* 居中显示 */
+                padding: 0 0.5rem; /* 添加左右内边距 */
+            }
+
+            .prompt-card {
+                padding: 0.75rem !important; /* 从1rem减小到0.75rem */
+                margin: 0; /* 移除外边距 */
+            }
+            
+            .prompt-card p:first-child {
+                font-size: 0.9rem !important; /* 减小标题字体 */
+                margin-bottom: 0.25rem;
+            }
+            
+            .prompt-card p:last-child {
+                font-size: 0.75rem !important; /* 减小描述字体 */
+                line-height: 1.2;
+            }
+            
+            /* 确保在移动端输入框不会超出屏幕 */
+            #messageInputContainer {
+                max-height: 50vh;
+                overflow: hidden;
+            }
+            
+            #messageInput {
+                max-height: calc(50vh - 60px); /* 为工具栏预留空间 */
+            }
         }
-        
-        .prompt-card p:last-child {
-            font-size: 0.75rem !important; /* 减小描述字体 */
-            line-height: 1.2;
-        }
-        
-        /* 确保在移动端输入框不会超出屏幕 */
-        #messageInputContainer {
-            max-height: 50vh;
-            overflow: hidden;
-        }
-        
-        #messageInput {
-            max-height: calc(50vh - 60px); /* 为工具栏预留空间 */
-        }
-    }
 
     /* 超小屏幕额外优化 */
     @media (max-width: 480px) {
@@ -1148,10 +1165,10 @@
                 { id: 'Qwen/Qwen3-8B', name: 'Qwen3-8B', maxContext: 128000, supportsThinking: true },
                 
                 // Models that DO NOT support thinking mode
-                { id: 'Qwen/Qwen2.5-Coder-7B-Instruct', name: 'Qwen2.5-Coder-7B-Instruct', maxContext: 32000, supportsThinking: false },
-                { id: 'deepseek-ai/DeepSeek-R1-0528-Qwen3-8B', name: 'DeepSeek-R1-0528', maxContext: 128000, supportsThinking: false },
+                { id: 'deepseek-ai/DeepSeek-R1-0528-Qwen3-8B', name: 'DeepSeek-R1-0528 (✨思考)', maxContext: 128000, supportsThinking: false },
+                { id: 'THUDM/GLM-4.1V-9B-Thinking', name: 'GLM-4.1V-9B-Thinking (✨思考)', maxContext: 64000, supportsThinking: false },
                 { id: 'THUDM/GLM-Z1-9B-0414', name: 'GLM-Z1-9B-0414', maxContext: 128000, supportsThinking: false },
-                { id: 'THUDM/GLM-4.1V-9B-Thinking', name: 'GLM-4.1V-9B-Thinking', maxContext: 64000, supportsThinking: false },
+                { id: 'Qwen/Qwen2.5-Coder-7B-Instruct', name: 'Qwen2.5-Coder-7B-Instruct', maxContext: 32000, supportsThinking: false },
                 { id: 'internlm/internlm2_5-7b-chat', name: 'InternLM2.5-7B-Chat', maxContext: 32000, supportsThinking: false },
             ],
             image: [
@@ -1161,7 +1178,7 @@
 
         const DEFAULT_SETTINGS = {
             chat: {
-                modelId: 'deepseek-ai/DeepSeek-R1-Distill-Qwen-7B',
+                modelId: 'deepseek-ai/DeepSeek-R1-0528-Qwen3-8B',
                 temperature: 0.7,
                 maxTokens: 4096, // 确保不超过4096
                 contextRounds: 10,
@@ -1327,7 +1344,7 @@
             sortedChatModels.forEach(model => {
                 const option = document.createElement('option');
                 option.value = model.id;
-                option.textContent = `${model.name}${model.supportsThinking ? ' (✨支持思考)' : ''}`;
+                option.textContent = `${model.name}${model.supportsThinking ? ' (✨思考)' : ''}`;
                 option.dataset.maxContext = model.maxContext;
                 option.dataset.supportsThinking = model.supportsThinking;
                 chatModelSelect.appendChild(option);
